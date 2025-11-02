@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forecast_electricity_markets"
+version = "0.1.0"
+description = "Project to forecast electricity markets in Europe"
+dependencies = []
+requires-python = ">=3.12"
