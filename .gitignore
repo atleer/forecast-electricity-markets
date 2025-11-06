@@ -3,3 +3,12 @@ data
 
 # from pyproject.toml
 *egg-info*
+
+# notes
+notes
+
+# scratch
+scratch
+
+# vscode settings
+*settings.json
