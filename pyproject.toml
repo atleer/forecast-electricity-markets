@@ -6,7 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "elmark"
 version = "0.1.0"
 description = "Project on forecasting electricity markets in Europe"
-dependencies = []
+dependencies = [
+    "pydantic >= 2.0",
+    "numpy >= 2.3.4,<3",
+    "ipykernel >= 7.1.0,<8",
+    "pip >= 25.2,<26",
+    "pandas >= 2.3.3,<3"
+]
 requires-python = ">=3.12"
 
 [tool.pixi.workspace]
@@ -26,3 +32,5 @@ numpy = ">=2.3.4,<3"
 ipykernel = ">=7.1.0,<8"
 pip = ">=25.2,<26"
 pandas = ">=2.3.3,<3"
+pydantic = ">=2.12.4,<3"
+pyarrow = "*"
