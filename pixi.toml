@@ -1,0 +1,17 @@
+[workspace]
+authors = ["atleer <atle.rimehaug@gmail.com>"]
+channels = ["conda-forge"]
+name = "forecast-electricity-markets"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.12.*"
+numpy = ">=2.3.4,<3"
+matplotlib = ">=3.10.7,<4"
+seaborn = ">=0.13.2,<0.14"
+pandas = ">=2.3.3,<3"
+pytorch = ">=2.8.0,<3"
+ipykernel = ">=7.1.0,<8"

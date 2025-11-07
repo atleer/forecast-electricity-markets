@@ -12,3 +12,7 @@ scratch
 
 # vscode settings
 *settings.json
+
+# pixi environments
+.pixi
+*.egg-info
