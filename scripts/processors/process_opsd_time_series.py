@@ -14,10 +14,10 @@ os.getcwd()
 
 # %% Get data path(s)
 
-raw_data_dir = Path('data/raw')
-selected_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
-
-filepath = list(selected_data_dir.glob('**/*15min*.csv'))[0]
+if 'filepath' not in globals():
+    raw_data_dir = Path('data/raw')
+    selected_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
+    filepath = list(selected_data_dir.glob('**/*15min*.csv'))[0]
 filepath
 
 # %% Load csv data into DataFrame
@@ -33,9 +33,6 @@ cols_to_keep = base_cols + [
 ]
 df_sub = df[cols_to_keep]
 df_sub.columns
-# %%
-
-df_sub['DE_wind_generation_actual'].iloc[10]
 
 # %% Rename columns
 
