@@ -17,7 +17,7 @@ os.getcwd()
 if 'filepath' not in globals():
     raw_data_dir = Path('data/raw')
     selected_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
-    filepath = list(selected_data_dir.glob('**/*15min*.csv'))[0]
+    filepath = list(selected_data_dir.glob('**/*60min*.csv'))[0]
 filepath
 
 # %% Load csv data into DataFrame
@@ -26,7 +26,7 @@ df.columns
 
 # %% Extract columns of interest
 base_cols = ['utc_timestamp', 'cet_cest_timestamp']
-patterns = ['DE_wind_generation', 'DE_load_actual']
+patterns = ['DE_wind_generation', 'DE_LU_price_day_ahead']
 cols_to_keep = base_cols + [
     col for col in df.columns 
     if any(pattern in col for pattern in patterns)
@@ -40,17 +40,18 @@ class TimeSeriesTable(BaseModel):
     utc_timestamp: PastDatetime
     cet_cest_timestamp: PastDatetime
     DE_wind_generation: float # from DE_wind_generation_actual
-    DE_load_transparency: float # from DE_load_actual_entsoe_transparency
+    DE_price_ahead: float # from DE_LU_price_day_ahead
         
 conversion_dict = {
     'utc_timestamp': 'utc_timestamp',
     'cet_cest_timestamp': 'cet_cest_timestamp',
     'DE_wind_generation_actual': 'DE_wind_generation',
-    'DE_load_actual_entsoe_transparency': 'DE_load_transparency'
+    'DE_LU_price_day_ahead': 'DE_price_ahead'
 }
 
 df_sub_renamed = df_sub.rename(columns=conversion_dict)
 df_sub_renamed.columns
+
 # %% Validate fields
 
 rows_out = list()
