@@ -9,7 +9,7 @@ import os
 raw_data_dir = Path('data/raw')
 sel_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
 
-filepaths = list(sel_data_dir.glob('**/*15min*.csv'))
+filepaths = list(sel_data_dir.glob('**/*60min*.csv'))
 
 # %%
 
