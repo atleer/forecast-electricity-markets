@@ -59,13 +59,12 @@ for row in df_sub_renamed.to_dict(orient='records'):
     rows_out.append(TimeSeriesTable.model_validate(row).model_dump())
 df_out = pd.DataFrame(rows_out)
 
-
 # %% Write to file
 
 table = pa.Table.from_pandas(df_out)
 
-out_dir = Path('data/processed')
-out_path = out_dir.joinpath(*filepath.parts[-2:]).with_suffix('.parquet')
+out_dir = Path('data/processed').joinpath(filepath.parts[-2])
+out_path = (out_dir / 'all_samples').joinpath(filepath.parts[-1]).with_suffix('.parquet')
 out_path.parent.mkdir(exist_ok=True, parents=True)
 pq.write_table(table, out_path, compression='snappy')
 
