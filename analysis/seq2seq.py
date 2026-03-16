@@ -44,8 +44,10 @@ if IN_COLAB:
 if IN_COLAB:
     root_dir = Path('.')
 else:
-    notebook_path = %pwd
-    root_dir = Path(notebook_path).parent
+    filepath = Path(__file__).resolve()
+    root_dir = filepath.parent.parent
+
+print(root_dir)
 
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
@@ -78,6 +80,7 @@ device = set_device()
 
 processed_data_dir = root_dir / 'data/processed/opsd-time_series-2020-10-06'
 filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
+print(filepaths)
 
 for filepath in filepaths:
     if 'train' in filepath.parts:
