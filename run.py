@@ -2,7 +2,6 @@
 from pathlib import Path
 from runpy import run_path
 from tqdm import tqdm
-import os
 
 # %% Extract relevant time series data from raw data
 
@@ -30,6 +29,18 @@ for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
             'filepath': filepath,
         }
     )
+
+
+# %% Do forecasting with seq2seq model
+
+processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
+filepaths= list(processed_data_dir.glob('**/*60*.parquet'))
+print(filepaths)
+
+run_path(
+    'analysis/seq2seq.py',
+    init_globals={'filepaths': filepaths}
+)
 
 
 # %%

@@ -11,17 +11,19 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-
 from torch.utils.data import TensorDataset, DataLoader
 
 # %% Check whether google colab kernel is used and download data if it is
+
+# TODO: Current organization doesn't allow for using google colab
 
 import sys 
 
 IN_COLAB = 'google.colab' in sys.modules
 
 if IN_COLAB:
+    raise EnvironmentError('Google Colab is not yet supported. Please run this script in a local environment.')
+    
     # download data
     import urllib.request
 
@@ -78,9 +80,11 @@ device = set_device()
 
 # %% Load data
 
-processed_data_dir = root_dir / 'data/processed/opsd-time_series-2020-10-06'
-filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
-print(filepaths)
+if 'filepaths' not in globals():
+
+    processed_data_dir = root_dir / 'data/processed/opsd-time_series-2020-10-06'
+    filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
+    print(filepaths)
 
 for filepath in filepaths:
     if 'train' in filepath.parts:
