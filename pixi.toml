@@ -23,5 +23,6 @@ statsforecast = ">=2.0.3,<3"
 ipykernel = ">=7.1.0,<8"
 u8darts = ">=0.40.0,<0.41"
 pytorch-lightning = ">=2.6.0,<3"
+dvc = ">=3.67.0,<4"
 
 
