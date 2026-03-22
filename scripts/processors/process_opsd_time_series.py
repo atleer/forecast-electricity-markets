@@ -24,9 +24,20 @@ filepath
 df = pd.read_csv(filepath)
 df.columns
 
+# %%
+for col_name in df.columns:
+    if col_name[:2] == 'DE':
+        print(col_name)
+
 # %% Extract columns of interest
 base_cols = ['utc_timestamp', 'cet_cest_timestamp']
-patterns = ['DE_wind_generation', 'DE_LU_price_day_ahead']
+patterns = [
+    'DE_LU_wind_generation_actual', 
+    'DE_LU_solar_generation_actual', 
+    'DE_LU_load_actual_entsoe_transparency',
+    'DE_LU_load_forecast_entsoe_transparency',
+    'DE_LU_price_day_ahead'
+]
 cols_to_keep = base_cols + [
     col for col in df.columns 
     if any(pattern in col for pattern in patterns)
@@ -34,18 +45,25 @@ cols_to_keep = base_cols + [
 df_sub = df[cols_to_keep]
 df_sub.columns
 
+
 # %% Rename columns
 
 class TimeSeriesTable(BaseModel):
     utc_timestamp: PastDatetime
     cet_cest_timestamp: PastDatetime
-    DE_wind_generation: float # from DE_wind_generation_actual
+    DE_wind_generation: float # from DE_LU_wind_generation_actual
+    DE_solar_generation: float # from DE_LU_solar_generation_actual
+    DE_load_entsoe_transparency: float # from DE_LU_load_actual_entsoe_transparency
+    DE_load_forecast_entsoe_transparency: float # from DE_LU_load_forecast_entsoe_transparency
     DE_price_ahead: float # from DE_LU_price_day_ahead
         
 conversion_dict = {
     'utc_timestamp': 'utc_timestamp',
     'cet_cest_timestamp': 'cet_cest_timestamp',
-    'DE_wind_generation_actual': 'DE_wind_generation',
+    'DE_LU_wind_generation_actual': 'DE_wind_generation',
+    'DE_LU_solar_generation_actual': 'DE_solar_generation', 
+    'DE_LU_load_actual_entsoe_transparency': 'DE_load_entsoe_transparency',
+    'DE_LU_load_forecast_entsoe_transparency': 'DE_load_forecast_entsoe_transparency',
     'DE_LU_price_day_ahead': 'DE_price_ahead'
 }
 
@@ -64,8 +82,9 @@ df_out = pd.DataFrame(rows_out)
 table = pa.Table.from_pandas(df_out)
 
 out_dir = Path('data/processed').joinpath(filepath.parts[-2])
-out_path = (out_dir / 'all_samples').joinpath(filepath.parts[-1]).with_suffix('.parquet')
-out_path.parent.mkdir(exist_ok=True, parents=True)
+out_path = (out_dir / 'all_samples').joinpath(filepath.stem+'_multi_variables').with_suffix('.parquet')
+out_path
 pq.write_table(table, out_path, compression='snappy')
+
 
 # %%
