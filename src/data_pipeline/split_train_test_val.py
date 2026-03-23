@@ -20,7 +20,7 @@ df = pd.read_parquet(filepath)
 df
 
 # %% Remove NaNs
-valid_mask = df['DE_wind_generation'].notna() & df['DE_price_ahead'].notna()
+valid_mask = df['DE_price_ahead'].notna()
 df_valid = df[valid_mask]
 df_valid
 # %% Split into train, validation, and test subsets
@@ -38,11 +38,6 @@ df_test = df_valid[(n_samples_train+n_samples_val):]
 
 subsets = {'train': df_train, 'validation': df_val, 'test': df_test}
 
-# %%
-out_dir = Path('data/processed').joinpath(filepath.parts[-3])
-out_path = (out_dir / 'train').joinpath(filepath.parts[-1]).with_suffix('.parquet')
-out_path
-
 # %% Write to files
 
 for subset_name, df_subset in subsets.items():
@@ -53,5 +48,3 @@ for subset_name, df_subset in subsets.items():
     out_path.parent.mkdir(exist_ok=True, parents=True)
     pq.write_table(table, out_path, compression='snappy')
 
-
-# %%

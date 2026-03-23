@@ -24,11 +24,6 @@ filepath
 df = pd.read_csv(filepath)
 df.columns
 
-# %%
-for col_name in df.columns:
-    if col_name[:2] == 'DE':
-        print(col_name)
-
 # %% Extract columns of interest
 base_cols = ['utc_timestamp', 'cet_cest_timestamp']
 patterns = [
@@ -82,7 +77,7 @@ df_out = pd.DataFrame(rows_out)
 table = pa.Table.from_pandas(df_out)
 
 out_dir = Path('data/processed').joinpath(filepath.parts[-2])
-out_path = (out_dir / 'all_samples').joinpath(filepath.stem+'_multi_variables').with_suffix('.parquet')
+out_path = (out_dir / 'all_samples').joinpath(filepath.stem).with_suffix('.parquet')
 out_path
 pq.write_table(table, out_path, compression='snappy')
 
