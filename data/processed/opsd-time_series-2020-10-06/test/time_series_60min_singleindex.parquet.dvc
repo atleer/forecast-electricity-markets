@@ -1,5 +1,5 @@
 outs:
-- md5: 1a0725fc35075fb79914d57d453140e7
-  size: 90786
+- md5: 2b62210b1e3c8ba8e23cae38df8dadaf
+  size: 135201
   hash: md5
   path: time_series_60min_singleindex.parquet
