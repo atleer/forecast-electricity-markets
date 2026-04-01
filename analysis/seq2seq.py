@@ -22,37 +22,23 @@ import sys
 IN_COLAB = 'google.colab' in sys.modules
 
 if IN_COLAB:
-    raise EnvironmentError('Google Colab is not yet supported. Please run this script in a local environment.')
-    
-    # download data
-    import urllib.request
+    import subprocess
 
-    base_url = "https://raw.githubusercontent.com/atleer/forecast-electricity-markets/main/data/processed/opsd-time_series-2020-10-06"
-    splits = ['train', 'validation', 'test']
-    filename = 'time_series_60min_singleindex.parquet'
-
-    for split in splits:
-        dir_path = f"data/processed/opsd-time_series-2020-10-06/{split}"
-        os.makedirs(dir_path, exist_ok=True)
-        url = f"{base_url}/{split}/{filename}"
-        dest = f"{dir_path}/{filename}"
-        urllib.request.urlretrieve(url, dest)
-        print(f"Downloaded {split}")
-
-    root_dir = Path('.')
-
-# %% Set path to root directory
-
-if IN_COLAB:
-    root_dir = Path('.')
+    # Check if clone of repository already exists
+    if not Path("forecast-electricity-markets").exists():
+        # Clone repository
+        subprocess.run(
+            ["git", "clone", "https://github.com/atleer/forecast-electricity-markets.git"],
+            check=True
+        )
+    root_dir = Path('forecast-electricity-markets')
 else:
     filepath = Path(__file__).resolve()
     root_dir = filepath.parent.parent
 
-print(root_dir)
-
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
+
 
 # %% Set seed and turn of non-deterministic behavior for reproducibility
 
@@ -170,6 +156,7 @@ max_epochs = 1
 criterion = nn.MSELoss()
 
 model = Seq2SeqGRU(enc_input_size=len(features_column_names), dec_input_size = len(targets_column_names))
+model.to(device)
 model.eval()
 y_pred_val = model(X_val, horizon = horizon)
 best_loss_val = criterion(y_pred_val, y_val)
@@ -206,12 +193,5 @@ for learning_rate in learning_rates:
             "optimizer_state_dict": optimizer.state_dict(),
             "loss_validation": best_loss_val,
         }, 'checkpoint.pth')
-
-
-
-
-
-
-
 
 # %%
