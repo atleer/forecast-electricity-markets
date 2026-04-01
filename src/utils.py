@@ -38,7 +38,12 @@ def create_sequences(features, targets, input_len: int = 48, horizon: int = 24):
 
     return np.array(X), np.array(y)
 
-def train(model: nn.Module, dataloader: DataLoader, horizon: int, optimizer: torch.optim.Optimizer, criterion = nn.MSELoss(), nepochs: int = 50):
+def train(model: nn.Module, 
+          dataloader: DataLoader, 
+          horizon: int, 
+          optimizer: torch.optim.Optimizer, 
+          criterion = nn.MSELoss(), 
+          nepochs: int = 50):
     """Train a neural network model
 
     Args:
@@ -129,11 +134,11 @@ def train_with_early_stopping(model: nn.Module,
             print(f'epoch: {epoch}, loss: {loss.item():.3f}')
 
 
-        losses_val_temp = []
+        losses_val_batches = []
         for (X_val_batch, y_val_batch) in val_dataloader:
             y_pred_val = model(X_val_batch, horizon=horizon)
-            losses_val.append(criterion(y_pred_val, y_val_batch).item())
-        loss_val = np.mean(losses_val_temp)
+            losses_val_batches.append(criterion(y_pred_val, y_val_batch).item())
+        loss_val = np.mean(losses_val_batches)
         losses_val.append(loss_val)
 
         if loss_val < best_loss_val:
