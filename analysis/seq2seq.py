@@ -94,30 +94,36 @@ for filepath in filepaths:
     elif 'test' in filepath.parts:
         df_test = pd.read_parquet(filepath)
 
-
 # %% Choose columns to use in data
 
-features_column_names = ['DE_wind_generation', 'DE_price_ahead']
+features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
 targets_column_names = ['DE_price_ahead']
+print(f'Columns selected to be used as features: {features_column_names}')
+print(f'Columns selected to be used as targets: {targets_column_names}')
+
+# %% Drop NaNs
+df_train = df_train[list(set(features_column_names + targets_column_names))].dropna()
+df_val = df_val[list(set(features_column_names + targets_column_names))].dropna()
+df_test = df_train[list(set(features_column_names + targets_column_names))].dropna()
 
 # %% Scale data
 
 # OPEN QUESTION: Should I use different scaling than standardization with mean?
 
-features_mean = df_train[features_column_names].mean(axis=0).values
-targets_mean = df_train[targets_column_names].mean(axis=0).values
+features_mean = df_train.mean(axis=0).values
+targets_mean = df_train.mean(axis=0).values
 
-features_std = df_train[features_column_names].std(axis=0).values
-targets_std = df_train[targets_column_names].std(axis=0).values
+features_std = df_train.std(axis=0).values
+targets_std = df_train.std(axis=0).values
 
 
-features_train = ((df_train[features_column_names].values - features_mean)/features_std)
-features_val = ((df_val[features_column_names].values - features_mean)/features_std)
-features_test = ((df_test[features_column_names].values - features_mean)/features_std)
+features_train = ((df_train.values - features_mean)/features_std)
+features_val = ((df_val.values - features_mean)/features_std)
+features_test = ((df_test.values - features_mean)/features_std)
 
-targets_train = ((df_train[targets_column_names].values - targets_mean)/targets_std)
-targets_val = ((df_val[targets_column_names].values - targets_mean)/targets_std)
-targets_test = ((df_test[targets_column_names].values - targets_mean)/targets_std)
+targets_train = ((df_train.values - targets_mean)/targets_std)
+targets_val = ((df_val.values - targets_mean)/targets_std)
+targets_test = ((df_test.values - targets_mean)/targets_std)
 
 # %% Create sequences
 
@@ -163,14 +169,13 @@ max_epochs = 1
 
 criterion = nn.MSELoss()
 
-model = Seq2SeqGRU(enc_input_size=2, dec_input_size = 1)
+model = Seq2SeqGRU(enc_input_size=len(features_column_names), dec_input_size = len(targets_column_names))
 model.eval()
 y_pred_val = model(X_val, horizon = horizon)
 best_loss_val = criterion(y_pred_val, y_val)
 
 for learning_rate in learning_rates:
 
-    model = Seq2SeqGRU(enc_input_size=2, dec_input_size = 1)
     model.train()
 
     optimizer = torch.optim.Adam(lr = learning_rate, params=model.parameters())
@@ -208,3 +213,5 @@ for learning_rate in learning_rates:
 
 
 
+
+# %%
