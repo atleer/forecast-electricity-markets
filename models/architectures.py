@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class Seq2SeqGRU(nn.Module):
-    def __init__(self, enc_input_size: int = 2, dec_input_size: int = 1, hidden_size: int = 64, num_layers: int = 1, device: str = 'cpu'):
+    def __init__(self, enc_input_size: int, dec_input_size: int, hidden_size: int = 64, num_layers: int = 1, device: str = 'cpu'):
         super().__init__()
         self.encoder = nn.GRU(input_size=enc_input_size, hidden_size=hidden_size, batch_first=True, device=device)
         self.decoder = nn.GRU(input_size=dec_input_size, hidden_size=hidden_size, batch_first=True, device=device)
@@ -14,7 +14,7 @@ class Seq2SeqGRU(nn.Module):
         enc_output, hidden = self.encoder(X)
 
         # seed for decoder: the last observed price
-        dec_input = X[:, -1:, 1:2] # dims: (batch, 1, 1)
+        dec_input = X[:, -1:, -1:] # dims: (batch, 1, 1)
 
         predictions = []
         for time_step in range(horizon):
