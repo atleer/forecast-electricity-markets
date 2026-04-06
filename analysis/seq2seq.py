@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 
 from tqdm import tqdm
+from datetime import datetime
+
 
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -47,9 +49,10 @@ SEED = 2026
 def set_seed(seed: int = 2026) -> None:
     """Set seed and disable non-deterministic behavior for reproducibility"""
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+    # when set to true, cuda tests multiple convolution algorithm to find fastes for shape, set to true the default is used
     torch.backends.cudnn.benchmark = False
+    # only use deterministic algorithms
     torch.backends.cudnn.deterministic = True
 
 # %% Set device
@@ -156,6 +159,8 @@ max_epochs = 1
 criterion = nn.MSELoss()
 
 model = Seq2SeqGRU(enc_input_size=len(features_column_names), dec_input_size = len(targets_column_names))
+
+
 model.to(device)
 model.eval()
 y_pred_val = model(X_val, horizon = horizon)
@@ -187,11 +192,26 @@ for learning_rate in learning_rates:
             'learning_rate': learning_rate
         }
 
+        try:
+            from google.colab import drive
+            drive.mount('/content/drive')
+
+            save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}')
+
+        except ImportError:
+            save_dir = 'results/models'  # local fallback when not on Colab
+
+        import os
+        save_dir.mkdir(exist_ok=True, parents=True)
+
+        filename = f'{save_dir}/{datetime.now().strftime("%Y-%m-%d")}_loss_val={best_loss_val:.3f}.pth'
         torch.save({
             "stopped_epoch": stopped_epoch,
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss_validation": best_loss_val,
-        }, 'checkpoint.pth')
+            "learning_rate": learning_rate,
+        }, filename)
+
 
 # %%
