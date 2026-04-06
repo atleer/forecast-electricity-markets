@@ -91,30 +91,32 @@ print(f'Columns selected to be used as targets: {targets_column_names}')
 # %% Drop NaNs
 df_train = df_train[list(set(features_column_names + targets_column_names))].dropna()
 df_val = df_val[list(set(features_column_names + targets_column_names))].dropna()
-df_test = df_train[list(set(features_column_names + targets_column_names))].dropna()
+timestamps_test = df_test['utc_timestamp']
+df_test = df_test[list(set(features_column_names + targets_column_names))].dropna()
+timestamps_test = timestamps_test.loc[df_test.index]
 
+df_train[targets_column_names]
 # %% Scale data
 
 # OPEN QUESTION: Should I use different scaling than standardization with mean?
 
-features_mean = df_train.mean(axis=0).values
-targets_mean = df_train.mean(axis=0).values
+features_mean = df_train[features_column_names].mean(axis=0).values
+targets_mean = df_train[targets_column_names].mean(axis=0).values
 
-features_std = df_train.std(axis=0).values
-targets_std = df_train.std(axis=0).values
+features_std = df_train[features_column_names].std(axis=0).values
+targets_std = df_train[targets_column_names].std(axis=0).values
 
 
-features_train = ((df_train.values - features_mean)/features_std)
-features_val = ((df_val.values - features_mean)/features_std)
-features_test = ((df_test.values - features_mean)/features_std)
+features_train = ((df_train[features_column_names].values - features_mean)/features_std)
+features_val = ((df_val[features_column_names].values - features_mean)/features_std)
+features_test = ((df_test[features_column_names].values - features_mean)/features_std)
 
-targets_train = ((df_train.values - targets_mean)/targets_std)
-targets_val = ((df_val.values - targets_mean)/targets_std)
-targets_test = ((df_test.values - targets_mean)/targets_std)
+targets_train = ((df_train[targets_column_names].values - targets_mean)/targets_std)
+targets_val = ((df_val[targets_column_names].values - targets_mean)/targets_std)
+targets_test = ((df_test[targets_column_names].values - targets_mean)/targets_std)
 
 # %% Create sequences
 
-# TODO: This import won't work on google colab server
 from src.utils import create_sequences
 from models.architectures import Seq2SeqGRU
 
@@ -156,9 +158,8 @@ max_epochs = 1
 
 criterion = nn.MSELoss()
 
-model = Seq2SeqGRU(enc_input_size=len(features_column_names), dec_input_size = len(targets_column_names))
-
-
+model = Seq2SeqGRU(enc_input_size=len(features_column_names), 
+                   dec_input_size = len(targets_column_names))
 model.to(device)
 model.eval()
 y_pred_val = model(X_val, horizon = horizon)
@@ -212,6 +213,62 @@ for learning_rate in learning_rates:
             "loss_validation": best_loss_val,
             "learning_rate": learning_rate,
         }, filename)
+
+
+# %% Evaluate Model - Make Plots and Calculate Metrics
+
+load_dir = save_dir
+
+# load model with lowest validation loss
+idx_lowest_valloss = np.argmin(list(load_dir.glob('**/*.pth')))
+load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+loaded_model_results = torch.load(load_path)
+
+
+# %%
+state_dict = loaded_model_results['model_state_dict']
+
+state_dict.keys()
+
+# %%
+
+# infer model arguments from shape of loaded parameters
+# encoder input size is last dim of weights input to hidden matrix in layer 0 of encoder (first dim - ignoring batch size and sequence length - is n_features x n_hidden_states or input_size x hidden_size)
+enc_input_size = state_dict['encoder.weight_ih_l0'].shape[-1]
+# number of hidden states is last dim of hidden to hidden matrix (first dim is n_features x n_hidden_states)
+hidden_size = state_dict['encoder.weight_hh_l0'].shape[-1]
+# first dimension of fully connected layer is the number of targets (usually just 1), last dim is number of hidden states, which is what the output is calculated from
+dec_input_size = state_dict['fc.weight'].shape[0]
+
+# instantiate model with random weights
+model = Seq2SeqGRU(enc_input_size=enc_input_size, 
+                   dec_input_size=dec_input_size, 
+                   hidden_size=hidden_size, 
+                   device=device)
+
+# set model parameters
+model.load_state_dict(state_dict)
+model.eval()
+
+# calculate metrics for loaded model
+
+y_pred_test = model(X_test, horizon=horizon)
+
+fig, axes = plt.subplots(ncols = 2, figsize = (10, 5))
+
+axes[0].set_title('Whole Test Period')
+axes[0].plot(y_test.cpu().numpy().flatten(), label = 'Data')
+with torch.no_grad():
+    axes[0].plot(y_pred_test.cpu().numpy().flatten(), label = 'Model Forecast')
+
+window_start = 10000
+window_end = window_start + 200
+axes[1].set_title('Small Time Window')
+axes[1].plot(y_test.cpu().numpy().flatten()[window_start:window_end])
+with torch.no_grad():
+    axes[1].plot(y_pred_test.cpu().numpy().flatten()[window_start:window_end])
+
+fig.legend()
 
 
 # %%
