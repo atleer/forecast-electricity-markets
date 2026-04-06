@@ -15,9 +15,7 @@ from datetime import datetime
 
 from torch.utils.data import TensorDataset, DataLoader
 
-# %% Check whether google colab kernel is used and download data if it is
-
-# TODO: Current organization doesn't allow for using google colab
+# %% Check whether google colab kernel is used and clone the repository if it is
 
 import sys 
 
@@ -185,6 +183,7 @@ for learning_rate in learning_rates:
 
     loss_val = criterion(y_pred_val, y_val)
 
+    # save trained model
     if  loss_val < best_loss_val:
         best_loss_val = loss_val
         best_learning_rate = learning_rate
@@ -193,15 +192,16 @@ for learning_rate in learning_rates:
         }
 
         try:
+            # save to google drive if using colab kernel
             from google.colab import drive
             drive.mount('/content/drive')
 
             save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}')
 
         except ImportError:
-            save_dir = 'results/models'  # local fallback when not on Colab
+            # save locally if not using colab kernel
+            save_dir = root_dir / Path(f'results/models/{model.__class__.__name__}')  # local fallback when not on Colab
 
-        import os
         save_dir.mkdir(exist_ok=True, parents=True)
 
         filename = f'{save_dir}/{datetime.now().strftime("%Y-%m-%d")}_loss_val={best_loss_val:.3f}.pth'
