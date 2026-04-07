@@ -14,22 +14,25 @@
   - [ ] Set up online remote repository for data. Currently only local remote.
 - [x] Write script for training classic Seq2Seq model.
   - [ ] Modularize code.
-    - Note: Partially modularized - training function is in utils
+    - Note: Partially modularized
 - [x] Make it possible to train model with Google Colab kernel in VS code for GPU capability.
 - [x] Write workflow manager script.
 - [ ] Write script to calculate metrics and visualize forecasting results.
+- [ ] Migrate to pytorch lightning
 - [ ] Write script for training transformer model.
 - [ ] Write script for training state-of-the-art forecasting models.
 - [ ] Create dashboard web application to visualize results.
 - [ ] Expand datasets used in forecast.
 
-## Installation Instructions
+## Installation instructions
 
-To install environment, run
+Pixi is used to mangage this repository's environment. First, click the link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, run
 
 ```
 pixi install
 ```
+
+in your terminal.
 
 ## Datasets
 - Downloaded from [Open Power Systems Data](https://open-power-system-data.org/) on 02.11.2025.
