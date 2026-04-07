@@ -2,10 +2,11 @@
 authors = ["atleer <atle.rimehaug@gmail.com>"]
 channels = ["conda-forge"]
 name = "forecast-electricity-markets"
-platforms = ["win-64", "linux-64"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
+install-kernel = "python -m ipykernel install forecast-elmark"
 
 [dependencies]
 python = "3.12.*"
@@ -23,8 +24,7 @@ statsforecast = ">=2.0.3,<3"
 ipykernel = ">=7.1.0,<8"
 u8darts = ">=0.40.0,<0.41"
 pytorch-lightning = ">=2.6.0,<3"
-
-[pypi-dependencies]
+pytest = ">=9.0.2,<10"
 dvc = ">=3.67.0,<4"
 
 
