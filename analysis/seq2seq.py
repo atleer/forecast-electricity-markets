@@ -1,23 +1,21 @@
 #%% Import libraries
 
+%load_ext autoreload
+%autoreload 2
+
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from pathlib import Path
 import pandas as pd
 
 import torch
 import torch.nn as nn
-
-from tqdm import tqdm
-from datetime import datetime
-
-
 from torch.utils.data import TensorDataset, DataLoader
 
-# %% Check whether google colab kernel is used and clone the repository if it is
+from datetime import datetime
+import sys
 
-import sys 
+# %% Check whether google colab kernel is used and clone the repository if it is
 
 IN_COLAB = 'google.colab' in sys.modules
 
@@ -38,6 +36,8 @@ else:
 
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
+
+from models.architectures import Seq2SeqGRU
 
 
 # %% Set seed and turn of non-deterministic behavior for reproducibility
@@ -88,14 +88,29 @@ targets_column_names = ['DE_price_ahead']
 print(f'Columns selected to be used as features: {features_column_names}')
 print(f'Columns selected to be used as targets: {targets_column_names}')
 
-# %% Drop NaNs
-df_train = df_train[list(set(features_column_names + targets_column_names))].dropna()
-df_val = df_val[list(set(features_column_names + targets_column_names))].dropna()
-timestamps_test = df_test['utc_timestamp']
-df_test = df_test[list(set(features_column_names + targets_column_names))].dropna()
-timestamps_test = timestamps_test.loc[df_test.index]
+# %%
 
-df_train[targets_column_names]
+from src.data_pipeline.preprocessing import clean_and_extract_data, scale_features_and_targets
+
+df_train, df_val, df_test = clean_and_extract_data(features_column_names = features_column_names, 
+                                                    targets_column_names = targets_column_names, 
+                                                    df_train = df_train,
+                                                    df_val = df_val,
+                                                    df_test = df_test
+                                                    )
+    
+
+# %%
+features_trainF, targets_train = scale_features_and_targets(df_train, df_train, features_column_names, targets_column_names)
+features_val, targets_val = scale_features_and_targets(df_train, df_val, features_column_names, targets_column_names)
+features_test, targets_test = scale_features_and_targets(df_train, df_test, features_column_names, targets_column_names)
+
+# %% Drop NaNs
+df_train = df_train[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
+df_val = df_val[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
+df_test = df_test[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
+
+#df_val[features_column_names]
 # %% Scale data
 
 # OPEN QUESTION: Should I use different scaling than standardization with mean?
@@ -118,7 +133,6 @@ targets_test = ((df_test[targets_column_names].values - targets_mean)/targets_st
 # %% Create sequences
 
 from src.utils import create_sequences
-from models.architectures import Seq2SeqGRU
 
 input_len = 48
 horizon = 24
@@ -270,5 +284,37 @@ with torch.no_grad():
 
 fig.legend()
 
+
+# %%
+
+import matplotlib.dates as mdates
+
+# Take only the first horizon step of each sequence → one prediction per timestamp
+y_test_np = y_test[:, 0, 0].cpu().numpy()
+with torch.no_grad():
+    y_pred_test_np = y_pred_test[:, 0, 0].detach().cpu().numpy()
+
+# Dates aligned to predictions: first prediction starts after input_len timesteps
+test_dates = df_test['utc_timestamp'].iloc[input_len: input_len + len(y_test_np)]
+
+fig, axes = plt.subplots(ncols = 2, figsize = (10, 5))
+
+axes[0].set_title('Whole Test Period')
+axes[0].plot(test_dates, y_test_np, label = 'Data')
+axes[0].plot(test_dates, y_pred_test_np, label = 'Model Forecast')
+axes[0].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+axes[0].xaxis.set_major_locator(mdates.MonthLocator())
+plt.setp(axes[0].xaxis.get_majorticklabels(), rotation=45)
+
+window_start = 100
+window_end = window_start + 200
+axes[1].set_title('Small Time Window')
+axes[1].plot(test_dates[window_start:window_end], y_test_np[window_start:window_end])
+axes[1].plot(test_dates[window_start:window_end], y_pred_test_np[window_start:window_end])
+axes[1].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
+
+fig.legend()
+fig.tight_layout()
 
 # %%
