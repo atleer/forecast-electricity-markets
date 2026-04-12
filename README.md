@@ -26,13 +26,11 @@
 
 ## Installation instructions
 
-Pixi is used to mangage this repository's environment. First, click the link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, run
+Pixi is used to mangage this repository's environment. First, click the link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, in your terminal, run
 
 ```
 pixi install
 ```
-
-in your terminal.
 
 ## Datasets
 - Downloaded from [Open Power Systems Data](https://open-power-system-data.org/) on 02.11.2025.
