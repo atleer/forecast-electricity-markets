@@ -1,8 +1,9 @@
+# %% Autoreload functions for quicker checks of local module modifications
+
+#%load_ext autoreload
+#%autoreload 2
+
 #%% Import libraries
-
-%load_ext autoreload
-%autoreload 2
-
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -25,8 +26,14 @@ if IN_COLAB:
     # Check if clone of repository already exists
     if not Path("forecast-electricity-markets").exists():
         # Clone repository
+        BRANCH = None
+        cmd = ["git", "clone"]
+        if BRANCH:
+            print(f"Cloning branch {BRANCH}")
+            cmd += ["-b", BRANCH]
+        cmd.append("https://github.com/atleer/forecast-electricity-markets.git")
         subprocess.run(
-            ["git", "clone", "https://github.com/atleer/forecast-electricity-markets.git"],
+            cmd,
             check=True
         )
     root_dir = Path('forecast-electricity-markets')
@@ -38,7 +45,6 @@ if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
 from models.architectures import Seq2SeqGRU
-
 
 # %% Set seed and turn of non-deterministic behavior for reproducibility
 
@@ -100,26 +106,10 @@ df_train, df_val, df_test = clean_and_extract_data(features_column_names = featu
                                                     )
     
 
-# %%
+# %% Scale data
 features_train, targets_train = scale_features_and_targets(df_train, df_train, features_column_names, targets_column_names)
 features_val, targets_val = scale_features_and_targets(df_train, df_val, features_column_names, targets_column_names)
 features_test, targets_test = scale_features_and_targets(df_train, df_test, features_column_names, targets_column_names)
-# %% Scale data
-
-features_mean = df_train[features_column_names].mean(axis=0).values
-targets_mean = df_train[targets_column_names].mean(axis=0).values
-
-features_std = df_train[features_column_names].std(axis=0).values
-targets_std = df_train[targets_column_names].std(axis=0).values
-
-
-features_train = ((df_train[features_column_names].values - features_mean)/features_std)
-features_val = ((df_val[features_column_names].values - features_mean)/features_std)
-features_test = ((df_test[features_column_names].values - features_mean)/features_std)
-
-targets_train = ((df_train[targets_column_names].values - targets_mean)/targets_std)
-targets_val = ((df_val[targets_column_names].values - targets_mean)/targets_std)
-targets_test = ((df_test[targets_column_names].values - targets_mean)/targets_std)
 
 # %% Create sequences
 
@@ -159,18 +149,17 @@ val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=Tr
 from src.utils import train, train_with_early_stopping
 
 learning_rates = [0.01, 0.001]
-max_epochs = 1
+max_epochs = 50
 
 criterion = nn.MSELoss()
 
-model = Seq2SeqGRU(enc_input_size=len(features_column_names), 
-                   dec_input_size = len(targets_column_names))
-model.to(device)
-model.eval()
-y_pred_val = model(X_val, horizon = horizon)
-best_loss_val = criterion(y_pred_val, y_val)
-
 for learning_rate in learning_rates:
+    model = Seq2SeqGRU(enc_input_size=len(features_column_names), 
+                   dec_input_size = len(targets_column_names))
+    model.to(device)
+    model.eval()
+    y_pred_val = model(X_val, horizon = horizon)
+    best_loss_val = criterion(y_pred_val, y_val)
 
     model.train()
 
@@ -222,12 +211,19 @@ for learning_rate in learning_rates:
 
 # %% Evaluate Model - Make Plots and Calculate Metrics
 
-load_dir = save_dir
+# TODO: Change this to the one with the lowest validation loss of the set of hyperparameters tuned
+# TODO 2: Move to separate file
 
-# load model with lowest validation loss
-idx_lowest_valloss = np.argmin(list(load_dir.glob('**/*.pth')))
-load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+load_path = filename
 loaded_model_results = torch.load(load_path)
+load_path
+
+
+# %% load model with lowest validation loss
+# load_dir = save_dir
+# idx_lowest_valloss = min(range(len(paths)), key=lambda i: float(paths[i].stem.split('=')[1]))
+# load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+# loaded_model_results = torch.load(load_path)
 
 
 # %%
