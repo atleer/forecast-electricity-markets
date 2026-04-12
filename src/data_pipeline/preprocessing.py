@@ -39,6 +39,8 @@ def scale_features_and_targets(df_train, df, features_column_names, targets_colu
         targets: standardized targets
     """
 
+    # OPEN QUESTION: Should I use different scaling than standardization with mean?
+
     features_mean = df_train[features_column_names].mean(axis=0).values
     targets_mean = df_train[targets_column_names].mean(axis=0).values
 

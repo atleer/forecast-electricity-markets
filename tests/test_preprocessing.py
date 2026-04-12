@@ -7,7 +7,6 @@ import numpy as np
 
 # %% Change working directory
 os.chdir(Path(__file__).parent.parent)
-os.getcwd()
 
 # %% Import functions to test
 
@@ -28,9 +27,9 @@ def sample_data():
 
     return df_train, df_val, df_test
 
-# %% Test dropping nans
+# %% Test extracting columns and dropping nans
 
-def test_nans_dropped(sample_data):
+def test_column_extraction_and_nan_drop(sample_data):
     df_train, df_val, df_test = sample_data
 
     features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
@@ -41,4 +40,5 @@ def test_nans_dropped(sample_data):
     assert df_val_clean.isna().sum().sum() == 0
     assert df_test_clean.isna().sum().sum() == 0
 
-# %%
+    expected_column_names = set(features_column_names + targets_column_names + ['utc_timestamp'])
+    assert set(df_train.columns) == expected_column_names
