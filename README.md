@@ -3,7 +3,7 @@
 **Goal**: Set up a data pipeline to forecast electricity prices.
 
 **Rules/Specifications**:
-- No AI. Only use AI to help debug or as a teaching assistant (ask questions to check understanding). The code should be written and the problems solved by myself for deeper learning.
+- No AI. Only use AI to help debug or as a teaching assistant (ask questions to check understanding). The code should be written and the problems solved by myself for better learning.
 
 ## Plan
 - [x] Find and download public dataset containing data on price ahead and electricity generation from various sources over at least several months, preferably several years.
