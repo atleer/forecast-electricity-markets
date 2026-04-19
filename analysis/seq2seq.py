@@ -144,12 +144,49 @@ train_dataloader = DataLoader(train_dataset, batch_size=256, shuffle=True)
 val_dataset = TensorDataset(X_val, y_val)
 val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=True)
 
-# %% Train
+# %% Create directories to save results 
+# TODO: Technically this ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
+
+date = Path(datetime.today().isoformat().split('T')[0])
+try:
+    # save to google drive if using colab kernel
+    from google.colab import drive
+    drive.mount('/content/drive')
+
+    save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}') / date
+except ImportError:
+    # save locally if not using colab kernel
+    save_dir = root_dir / Path(f'results/models/{model.__class__.__name__}') / date
+if save_dir.exists():
+    num_runs = len(list(save_dir.glob("*/")))
+    save_dir = save_dir / Path(f"Run{num_runs}")
+else:
+    save_dir = save_dir / Path(f"Run0")
+save_dir.mkdir(exist_ok=True, parents=True)
+
+# %% Train model
+
+date = Path(datetime.today().isoformat().split('T')[0])
+try:
+    # save to google drive if using colab kernel
+    from google.colab import drive
+    drive.mount('/content/drive')
+
+    save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}') / date
+except ImportError:
+    # save locally if not using colab kernel
+    save_dir = root_dir / Path(f'results/models/{model.__class__.__name__}') / date
+if save_dir.exists():
+    num_runs = len(list(save_dir.glob("*/")))
+    save_dir = save_dir / Path(f"Run{num_runs}")
+else:
+    save_dir = save_dir / Path(f"Run0")
+save_dir.mkdir(exist_ok=True, parents=True)
 
 from src.utils import train, train_with_early_stopping
 
 learning_rates = [0.01, 0.001]
-max_epochs = 50
+max_epochs = 10
 
 criterion = nn.MSELoss()
 
@@ -186,20 +223,7 @@ for learning_rate in learning_rates:
             'learning_rate': learning_rate
         }
 
-        try:
-            # save to google drive if using colab kernel
-            from google.colab import drive
-            drive.mount('/content/drive')
-
-            save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}')
-
-        except ImportError:
-            # save locally if not using colab kernel
-            save_dir = root_dir / Path(f'results/models/{model.__class__.__name__}')  # local fallback when not on Colab
-
-        save_dir.mkdir(exist_ok=True, parents=True)
-
-        filename = f'{save_dir}/{datetime.now().strftime("%Y-%m-%d")}_loss_val={best_loss_val:.3f}.pth'
+        filename = f'{save_dir}/loss_val={best_loss_val:.3f}.pth'
         torch.save({
             "stopped_epoch": stopped_epoch,
             "model_state_dict": model.state_dict(),
@@ -214,16 +238,29 @@ for learning_rate in learning_rates:
 # TODO: Change this to the one with the lowest validation loss of the set of hyperparameters tuned
 # TODO 2: Move to separate file
 
-load_path = filename
-loaded_model_results = torch.load(load_path)
-load_path
-
-
-# %% load model with lowest validation loss
-# load_dir = save_dir
-# idx_lowest_valloss = min(range(len(paths)), key=lambda i: float(paths[i].stem.split('=')[1]))
-# load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+# load_path = filename
 # loaded_model_results = torch.load(load_path)
+# load_path
+
+
+# %% load model with lowest validation loss among models trained in latest run
+load_dir = save_dir
+idx_lowest_valloss = min(range(len(list(load_dir.glob('**/*.pth')))), key=lambda i: float(list(load_dir.glob('**/*.pth'))[i].stem.split('=')[1]))
+load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+loaded_model_results = torch.load(load_path)
+
+# %% load model with lowest validation loss among all models trained today
+
+load_dir = save_dir.parent
+idx_lowest_valloss = min(range(len(list(load_dir.glob('**/*.pth')))), key=lambda i: float(list(load_dir.glob('**/*.pth'))[i].stem.split('=')[1]))
+load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+loaded_model_results = torch.load(load_path)
+
+# %% load model with lowest validation loss among all models
+load_dir = save_dir.parent.parent
+idx_lowest_valloss = min(range(len(list(load_dir.glob('**/*.pth')))), key=lambda i: float(list(load_dir.glob('**/*.pth'))[i].stem.split('=')[1]))
+load_path = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
+loaded_model_results = torch.load(load_path)
 
 
 # %%
