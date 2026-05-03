@@ -323,6 +323,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyzmq-27.1.0-py312hfb55c3c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/qhull-2020.2-h434a139_5.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/qt6-main-6.9.3-h5c1c036_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/rclone-1.74.0-h519d9b9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/re2-2025.11.05-h5301d42_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.2-h8c095d6_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/requests-2.32.5-pyhcf101f3_1.conda
@@ -694,6 +695,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pyyaml-6.0.3-py312h51361c1_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/pyzmq-27.1.0-py312h2ac7433_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/qhull-2020.2-h3c5361c_5.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/rclone-1.74.0-h1762f63_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/re2-2025.11.05-h77e0585_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/readline-8.3-h68b038d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/requests-2.33.1-pyhcf101f3_0.conda
@@ -1040,6 +1042,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyyaml-6.0.3-py312h04c11ed_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyzmq-27.1.0-py312h022ad19_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/qhull-2020.2-h420ef59_5.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rclone-1.74.0-h30cdf38_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/re2-2025.11.05-ha480c28_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/requests-2.33.1-pyhcf101f3_0.conda
@@ -1363,6 +1366,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/pyzmq-27.1.0-py312hbb5da91_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/qhull-2020.2-hc790b64_5.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/qt6-main-6.9.3-ha0de62e_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/rclone-1.74.0-h92b2616_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/re2-2025.11.05-ha104f34_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/requests-2.32.5-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/rich-14.3.3-pyhcf101f3_0.conda
@@ -12902,6 +12906,36 @@ packages:
   purls: []
   size: 95659243
   timestamp: 1761312853504
+- conda: https://conda.anaconda.org/conda-forge/linux-64/rclone-1.74.0-h519d9b9_0.conda
+  sha256: cf955c14b8e9cbe577a7451f962f62cefde0396e12bd5fbf79f00bcd551b97a2
+  md5: 0c0e4477a175e089b7a870da60bf6033
+  license: MIT
+  license_family: MIT
+  size: 44982557
+  timestamp: 1777657015545
+- conda: https://conda.anaconda.org/conda-forge/osx-64/rclone-1.74.0-h1762f63_0.conda
+  sha256: b0b05423c58691393e1c1f108015be04422fe554efd5b22a8d6edd3cc97f182e
+  md5: 755d7b622022db7434ba7f18759b95d2
+  constrains:
+  - __osx>=10.12
+  license: MIT
+  license_family: MIT
+  size: 45891251
+  timestamp: 1777657669815
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/rclone-1.74.0-h30cdf38_0.conda
+  sha256: 0ab40fdcc221cea21c8a9015e43414b5bea39babb1c1b1fe645c79a2dca07203
+  md5: 22e2eaa733615ee29e998d6d22c67d0e
+  license: MIT
+  license_family: MIT
+  size: 43073624
+  timestamp: 1777657362201
+- conda: https://conda.anaconda.org/conda-forge/win-64/rclone-1.74.0-h92b2616_0.conda
+  sha256: 508114377bb825a53d162e55ad563cd47203e4aead2a02d5b2f7d33995507ab7
+  md5: a3cac628099c190e4bc1b9430f095113
+  license: MIT
+  license_family: MIT
+  size: 43325176
+  timestamp: 1777657443142
 - conda: https://conda.anaconda.org/conda-forge/linux-64/re2-2025.11.05-h5301d42_0.conda
   sha256: 2f225ddf4a274743045aded48053af65c31721e797a45beed6774fdc783febfb
   md5: 0227d04521bc3d28c7995c7e1f99a721
