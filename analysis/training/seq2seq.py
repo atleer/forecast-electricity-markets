@@ -38,10 +38,11 @@ if IN_COLAB:
         )
     root_dir = Path('forecast-electricity-markets')
 else:
-    root_dir = Path(__file__).resolve().parent.parent
+    root_dir = Path(__file__).resolve().parent.parent.parent
 
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
+
 
 from models.architectures import Seq2SeqGRU
 
@@ -147,33 +148,15 @@ val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=Tr
 # TODO: Technically this ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
 
 date = Path(datetime.today().isoformat().split('T')[0])
+
+model_name = 'Seq2SeqGRU'
+
 try:
     # save to google drive if using colab kernel
     from google.colab import drive
     drive.mount('/content/drive')
 
     save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}') / date
-except ImportError:
-    # save locally if not using colab kernel
-    save_dir = root_dir / Path(f'results/models/{model.__class__.__name__}') / date
-if save_dir.exists():
-    num_runs = len(list(save_dir.glob("*/")))
-    save_dir = save_dir / Path(f"Run{num_runs}")
-else:
-    save_dir = save_dir / Path(f"Run0")
-save_dir.mkdir(exist_ok=True, parents=True)
-
-# %% Train model
-
-model_name = 'Seq2SeqGRU'
-
-date = Path(datetime.today().isoformat().split('T')[0])
-try:
-    # save to google drive if using colab kernel
-    from google.colab import drive
-    drive.mount('/content/drive')
-
-    save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model_name}') / date
 except ImportError:
     # save locally if not using colab kernel
     save_dir = root_dir / Path(f'results/models/{model_name}') / date
@@ -184,10 +167,12 @@ else:
     save_dir = save_dir / Path(f"Run0")
 save_dir.mkdir(exist_ok=True, parents=True)
 
+# %% Train model
+
 from src.utils import train, train_with_early_stopping
 
 learning_rates = [0.01, 0.001]
-max_epochs = 10
+max_epochs = 1
 
 criterion = nn.MSELoss()
 
@@ -233,5 +218,15 @@ for learning_rate in learning_rates:
             "learning_rate": learning_rate,
         }, filename)
 
+
+# %% Copy model checkpoint to google drive if run locally
+
+try:
+    from google.colab import drive  # already mounted earlier
+except ImportError:
+    # local kernel: upload to google drive via rclone
+    import subprocess
+    gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}"
+    subprocess.run(["rclone", "copy", str(save_dir), gdrive_dest], check=True)
 
 # %%
