@@ -1,4 +1,4 @@
-# Forecasting Electricy Markets
+# Forecasting Electricity Markets
 
 **Goal**: Set up a data pipeline to forecast electricity prices.
 
