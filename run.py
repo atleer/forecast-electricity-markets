@@ -35,12 +35,11 @@ for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
 
 processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
 filepaths= list(processed_data_dir.glob('**/*60*.parquet'))
-print(filepaths)
 
 run_path(
-    'analysis/seq2seq.py',
+    'analysis/train_model/seq2seq.py',
     init_globals={'filepaths': filepaths}
-)
+);
 
 
 # %%

@@ -1,7 +1,7 @@
 # %% Autoreload functions for quicker checks of local module modifications
 
-%load_ext autoreload
-%autoreload 2
+# %load_ext autoreload
+# %autoreload 2
 
 #%% Import libraries
 import numpy as np
@@ -55,6 +55,12 @@ SEED = 2026
 set_seed(SEED)
 device = set_device()
 
+if 'filepaths' not in globals():
+    processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
+
+    filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
+    print(filepaths)
+
 # %% Choose columns to use in data
 
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
@@ -66,7 +72,7 @@ input_len = 48
 horizon = 24
 
 train_dataloader, val_dataloader, _ = build_dataloaders(
-    processed_data_dir=Path('data/processed/opsd-time_series-2020-10-06'),
+    filepaths=filepaths,
     input_len=input_len,
     horizon=horizon,
     features_column_names=features_column_names,
@@ -78,7 +84,7 @@ train_dataloader, val_dataloader, _ = build_dataloaders(
 X_val, y_val = val_dataloader.dataset.tensors
 
 # %% Create directories to save results 
-# TODO: Technically this ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
+# TODO: This ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
 
 model_name = 'Seq2SeqGRU'
 
@@ -147,3 +153,5 @@ except ImportError:
     date = Path(datetime.today().isoformat().split('T')[0])
     gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}/{save_checkpoint_dir.name}"
     subprocess.run(["rclone", "copy", str(save_checkpoint_dir), gdrive_dest], check=True)
+
+# %%

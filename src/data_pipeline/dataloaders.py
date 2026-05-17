@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
 from pathlib import Path
+from typing import Union
 from src.utils import create_sequences
 from src.data_pipeline.preprocessing import clean_and_extract_data, scale_features_and_targets
 
@@ -21,17 +22,25 @@ def load_splits(filepaths):
 
 
 def build_dataloaders(
-        processed_data_dir: Path('data/processed/opsd-time_series-2020-10-06'), 
-        input_len: 24,
-        horizon: 48,
+        filepaths: list[Union[str, Path]], 
         features_column_names: list[str],
         targets_column_names: list[str],
-        batch_size: int,
-        device: str,              
+        input_len: int = 24,
+        horizon: int = 48,
+        device: str = 'cpu',
+        batch_size: int = 256,
     ):
+    """Create dataloaders for train, validation, and test datasets
     
-    filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
-    print(filepaths)
+    Args:
+        filepaths: list of paths to files containing train, validation, and test subdatasets
+        input_len: past timesteps to use in forecast (encoder window length)
+        horizon: future timesteps to forecast (decoder window length)
+        features_column_names: names of columns in data to use in forecast
+        targets_column_names: names of columns in data to forecast
+        batch_size: batch size in train dataloader
+        device: cpu or cuda
+    """
 
     df_train, df_val, df_test = load_splits(filepaths)
 
