@@ -156,7 +156,7 @@ try:
     from google.colab import drive
     drive.mount('/content/drive')
 
-    save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model.__class__.__name__}') / date
+    save_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model_name}') / date
 except ImportError:
     # save locally if not using colab kernel
     save_dir = root_dir / Path(f'results/models/{model_name}') / date
@@ -172,7 +172,7 @@ save_dir.mkdir(exist_ok=True, parents=True)
 from src.utils import train, train_with_early_stopping
 
 learning_rates = [0.01, 0.001]
-max_epochs = 1
+max_epochs = 10
 
 criterion = nn.MSELoss()
 
@@ -219,14 +219,23 @@ for learning_rate in learning_rates:
         }, filename)
 
 
-# %% Copy model checkpoint to google drive if run locally
+# %% Sync local and google drive folders with model checkpoints
+import subprocess
 
 try:
-    from google.colab import drive  # already mounted earlier
+    from google.colab import drive # if it was not mounted earlier, it was run locally
+    # Copy model checkpoint from google drive to local folder
+    local_dest = f""
+
 except ImportError:
+    # Copy model checkpoint to google drive if run locally
     # local kernel: upload to google drive via rclone
-    import subprocess
     gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}"
     subprocess.run(["rclone", "copy", str(save_dir), gdrive_dest], check=True)
+
+# %%
+
+import os
+os.getcwd()
 
 # %%
