@@ -15,6 +15,8 @@ from torch.utils.data import TensorDataset, DataLoader
 
 from datetime import datetime
 import sys
+import os
+
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -40,9 +42,8 @@ if IN_COLAB:
 else:
     root_dir = Path(__file__).resolve().parent.parent.parent
 
-if str(root_dir) not in sys.path:
-    sys.path.insert(0, str(root_dir))
 
+os.chdir(root_dir)
 
 from models.architectures import Seq2SeqGRU
 
@@ -54,7 +55,7 @@ def set_seed(seed: int = 2026) -> None:
     """Set seed and disable non-deterministic behavior for reproducibility"""
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    # when set to true, cuda tests multiple convolution algorithm to find fastes for shape, set to true the default is used
+    # when set to true, cuda tests multiple convolution algorithm to find fastest for shape, set to true the default is used
     torch.backends.cudnn.benchmark = False
     # only use deterministic algorithms
     torch.backends.cudnn.deterministic = True
@@ -75,7 +76,7 @@ device = set_device()
 
 if 'filepaths' not in globals():
 
-    processed_data_dir = root_dir / 'data/processed/opsd-time_series-2020-10-06'
+    processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
     filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
     print(filepaths)
 
@@ -224,18 +225,11 @@ import subprocess
 
 try:
     from google.colab import drive # if it was not mounted earlier, it was run locally
-    # Copy model checkpoint from google drive to local folder
-    local_dest = f""
-
 except ImportError:
     # Copy model checkpoint to google drive if run locally
     # local kernel: upload to google drive via rclone
     gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}"
     subprocess.run(["rclone", "copy", str(save_dir), gdrive_dest], check=True)
 
-# %%
-
-import os
-os.getcwd()
 
 # %%
