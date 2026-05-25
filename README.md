@@ -17,6 +17,7 @@ Set up a data pipeline to forecast electricity prices in Europe.
   - [ ] Modularize code.
     - Note: Partially modularized
 - [x] Make it possible to train model with Google Colab kernel in VS code for GPU capability.
+- [x] Add automatic saving of model checkpoints and syncing of saved models to Google Drive.
 - [x] Write workflow manager script.
 - [ ] Write script to calculate metrics and visualize forecasting results.
 - [ ] Migrate to pytorch lightning
