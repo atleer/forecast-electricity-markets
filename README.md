@@ -27,7 +27,7 @@ Set up a data pipeline to forecast electricity prices in Europe.
 
 ## Installation instructions
 
-Pixi is used to mangage this repository's environment. First, click the link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, in your terminal, run
+Pixi is used to mangage this repository's environment. Click the following link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, in your terminal, run
 
 ```
 pixi install
