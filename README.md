@@ -1,7 +1,7 @@
 # Forecasting Electricity Markets
 
 ### Goal: 
-Set up a data pipeline to forecast electricity prices.
+Set up a data pipeline to forecast electricity prices in Europe.
 
 **Rules/Specifications**:
 - No AI. Only use AI to help debug or as a teaching assistant (ask questions to check understanding). The code should be written and the problems solved by me for better learning.
@@ -20,8 +20,8 @@ Set up a data pipeline to forecast electricity prices.
 - [x] Write workflow manager script.
 - [ ] Write script to calculate metrics and visualize forecasting results.
 - [ ] Migrate to pytorch lightning
-- [ ] Write script for training transformer model.
-- [ ] Write script for training state-of-the-art forecasting models.
+- [ ] Implement transformer model for forecasting.
+- [ ] Implement state-of-the-art forecasting models.
 - [ ] Create dashboard web application to visualize results.
 - [ ] Expand datasets used in forecast.
 
