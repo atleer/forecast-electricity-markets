@@ -118,22 +118,6 @@ df_test
 y_pred_test = model(X_test, horizon=horizon)
 
 
-fig, axes = plt.subplots(ncols = 2, figsize = (10, 5))
-
-axes[0].set_title('Whole Test Period')
-axes[0].plot(y_test.cpu().numpy().flatten(), label = 'Data')
-with torch.no_grad():
-    axes[0].plot(y_pred_test.cpu().numpy().flatten(), label = 'Model Forecast')
-
-window_start = 100
-window_end = window_start + 200
-axes[1].set_title('Small Time Window')
-axes[1].plot(y_test.cpu().numpy().flatten()[window_start:window_end])
-with torch.no_grad():
-    axes[1].plot(y_pred_test.cpu().numpy().flatten()[window_start:window_end])
-
-fig.legend()
-
 
 # %%
 
