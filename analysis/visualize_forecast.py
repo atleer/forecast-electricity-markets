@@ -1,5 +1,6 @@
 # %% Import libaries
 
+import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import torch
@@ -40,7 +41,7 @@ best_model_overall
 
 # %% # Load model with lowest validation loss among models trained on specific day
 
-#filepath = load_dir / Path('2026-05-17')
+filepath = load_dir / Path('2024-04-06')
 if 'filepath' not in globals():
     print('Here')
     date = Path(datetime.today().isoformat().split('T')[0])
@@ -58,7 +59,7 @@ model_sel_day
     
 
 # %% Get model parameters
-state_dict = best_model_overall['model_state_dict']
+state_dict = model_sel_day['model_state_dict']
 
 # infer model arguments from shape of loaded parameters
 # encoder input size is last dim of weights input to hidden matrix in layer 0 of encoder (first dim - ignoring batch size and sequence length - is n_features x n_hidden_states or input_size x hidden_size)
@@ -110,12 +111,29 @@ _, _, test_dataloader = build_dataloaders(
 
 X_test, y_test = test_dataloader.dataset.tensors
 
-# %%
-df_test
 
-# %% calculate metrics for loaded model
+# %% Calculate model prediction on test dataset
 
 y_pred_test = model(X_test, horizon=horizon)
+
+
+# Take only the first horizon step of each sequence → one prediction per timestamp
+y_test_np = y_test[:, 0, 0].cpu().numpy()
+with torch.no_grad():
+    y_pred_test_np = y_pred_test[:, 0, 0].detach().cpu().numpy()
+
+# %%
+
+y_test_np.shape
+
+
+# %% Calculate metrics for model prediction
+
+MSE = np.mean((y_pred_test_np - y_test_np)**2) # mean square error
+MAE = np.mean(np.abs(y_pred_test_np - y_test_np)) # mean absolute error
+MASE = np.mean(np.abs(y_pred_test_np - y_test_np)) / np.mean(np.abs(y_test_np[1:] - y_test_np[:-1])) # mean absolute scaled error
+RMSE = MSE / np.mean(y_test_np**2) # relative meas square error
+FB = (np.sum(y_pred_test_np) - np.sum(y_test_np)) / np.sum(y_test_np)
 
 
 
@@ -123,11 +141,7 @@ y_pred_test = model(X_test, horizon=horizon)
 
 import matplotlib.dates as mdates
 
-# Take only the first horizon step of each sequence → one prediction per timestamp
-y_test_np = y_test[:, 0, 0].cpu().numpy()
-with torch.no_grad():
-    y_pred_test_np = y_pred_test[:, 0, 0].detach().cpu().numpy()
-
+# TODO: Double check the dates here
 # Dates aligned to predictions: first prediction starts after input_len timesteps
 test_dates = df_test['utc_timestamp'].iloc[input_len: input_len + len(y_test_np)]
 
@@ -138,6 +152,8 @@ axes[0].plot(test_dates, y_test_np, label = 'Data')
 axes[0].plot(test_dates, y_pred_test_np, label = 'Model Forecast')
 axes[0].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 axes[0].xaxis.set_major_locator(mdates.MonthLocator())
+axes[0].set_ylabel('Z-scored Price')
+axes[0].set_xlabel('Dates')
 plt.setp(axes[0].xaxis.get_majorticklabels(), rotation=45)
 
 window_start = 100
@@ -146,8 +162,13 @@ axes[1].set_title('Small Time Window')
 axes[1].plot(test_dates[window_start:window_end], y_test_np[window_start:window_end])
 axes[1].plot(test_dates[window_start:window_end], y_pred_test_np[window_start:window_end])
 axes[1].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+axes[1].set_xlabel('Dates')
 plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
+
+fig.suptitle(f'{model_name} model prediction on test dataset\nMetrics: MSE; {MSE:.2f}, MAE; {MAE:.2f}, RMSE; {RMSE:.2f}, MASE; {MASE:.2f}, FB; {FB:.2f}')
 
 fig.legend()
 fig.tight_layout()
 # %%
+
+# TODO: Add comparison between best model and selected model.
