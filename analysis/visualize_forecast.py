@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import torch
 from datetime import datetime
+import os
+import subprocess
+
 
 # %% Set device
 
@@ -23,21 +26,12 @@ model_name = 'Seq2SeqGRU'
 
 # %%
 
-try:
-    # save to google drive if using colab kernel
-    from google.colab import drive
-    drive.mount('/content/drive')
+root_dir = Path(__file__).parent.parent
+# save locally if not using colab kernel
+load_dir = root_dir / Path(f'results/models/{model_name}')
 
-    load_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model_name}')
-except ImportError:
-    import os
-    root_dir = Path(__file__).parent.parent
-    # save locally if not using colab kernel
-    load_dir = root_dir / Path(f'results/models/{model_name}')
-
-load_dir
-# %%
-list(load_dir.glob('**/*.pth'))
+gdrive_path = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}"
+subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
 
 # %% Evaluate Model - Make Plots and Calculate Metrics
 
