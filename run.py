@@ -42,4 +42,19 @@ run_path(
 );
 
 
+# %% Visualize forecasting results
+
+results_dir = Path('results')
+filepaths = list((results_dir / Path('models/Seq2SeqGRU')).glob('**/*.pth'))
+
+# %%
+
+run_path(
+    'analysis/visualize_forecast.py',
+    init_globals={'filepath': Path("/".join(filepath.parts[:-2])),
+                  'filepaths': filepaths},
+)
+
+# %%
+
 # %%
