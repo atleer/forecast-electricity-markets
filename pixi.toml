@@ -6,7 +6,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
-install-kernel = "python -m ipykernel install forecast-elmark"
+install-kernel = "python -m ipykernel install --user --name forecast-elmark"
 
 [dependencies]
 python = "3.12.*"
