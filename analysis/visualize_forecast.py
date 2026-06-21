@@ -36,11 +36,8 @@ path_lowest_valloss = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
 date_benchmark_model = path_lowest_valloss.parts[-3]
 model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
-# %%
-
 # %% # Load model with lowest validation loss among models trained on specific day
 
-filepath = load_dir / Path('2026-04-19')
 if 'filepath' not in globals():
     date = Path(datetime.today().isoformat().split('T')[0])
     print('Date not provided; using today\'s data.')
