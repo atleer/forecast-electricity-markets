@@ -21,7 +21,7 @@ Set up a data pipeline to forecast electricity prices in Europe.
 - [x] Write workflow manager script.
   - [ ] Add argument parser to workflow manager.
 - [x] Write script to calculate metrics and visualize forecasting results.
-  - [ ] Add to workflow manager
+  - [x] Add to workflow manager
 - [ ] Migrate to pytorch lightning
 - [ ] Implement transformer model for forecasting.
 - [ ] Implement state-of-the-art forecasting models.
