@@ -2,6 +2,7 @@
 from pathlib import Path
 from runpy import run_path
 from tqdm import tqdm
+from datetime import datetime
 
 # %% Extract relevant time series data from raw data
 
@@ -44,17 +45,16 @@ run_path(
 
 # %% Visualize forecasting results
 
-results_dir = Path('results')
-filepaths = list((results_dir / Path('models/Seq2SeqGRU')).glob('**/*.pth'))
-
-# %%
+model_name = 'Seq2SeqGRU'
+# Code below to pick results from specific day. This should be a feature in the dashboard web app
+# filepaths = list((Path(f'results/models/{model_name}')).glob('**/*.pth'))
+# filepath = Path("/".join(filepaths[0].parts[:-2]))
+date = Path(datetime.today().isoformat().split('T')[0])
+print('Date not provided; using today\'s data.')
+filepath = Path(f'results/models/{model_name}') / date
 
 run_path(
     'analysis/visualize_forecast.py',
-    init_globals={'filepath': Path("/".join(filepath.parts[:-2])),
-                  'filepaths': filepaths},
+    init_globals={'filepath': filepath},
 )
 
-# %%
-
-# %%
