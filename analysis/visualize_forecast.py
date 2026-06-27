@@ -21,7 +21,8 @@ from src.data_pipeline.dataloaders import build_dataloaders
 device = set_device()
 
 # %% Choose model
-model_name = 'Seq2SeqGRU'
+if 'model_name' not in globals():
+    model_name = 'Seq2SeqGRU'
 load_dir = root_dir / Path(f'results/models/{model_name}')
 
 # %% Sync model checkpoints from google drive to local folder
@@ -38,6 +39,7 @@ model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
 # %% # Load model with lowest validation loss among models trained on specific day
 
+#TODO: (Maybe) add argument parser to this file where a specific date is set and remove code below
 if 'filepath' not in globals():
     date = Path(datetime.today().isoformat().split('T')[0])
     print('Date not provided; using today\'s data.')
@@ -52,7 +54,6 @@ idx_lowest_valloss = min(range(len(list(filepath.glob('**/*.pth')))), key = lamb
 path_lowest_valloss = list(filepath.glob('**/*.pth'))[idx_lowest_valloss]
 date_model_selected = path_lowest_valloss.parts[-3]
 model_selected = torch.load(path_lowest_valloss, map_location=device)
-model_selected
 
 # %% Load test data
 # NOTE: Uneccessary to load from train and val folders as well here, but will have to refactor build_dataloaders if I don't load them
@@ -155,7 +156,7 @@ for date_model, model_to_load in models.items():
     fig.suptitle(f'Model: {model_name} {date_model} - prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
     fig.legend()
     fig.tight_layout()
-    fig.savefig(f'results/figures/{model_name}_{date_model}_prediction_on_test_set', bbox_inches = 'tight')
+    fig.savefig(f'results/figures/{model_name}_{date_model}_prediction_on_test_set', bbox_inches = 'tight');
 
 
 # %%
