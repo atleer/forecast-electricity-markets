@@ -9,18 +9,16 @@ from argparse import ArgumentParser
 parser = ArgumentParser(description='This program is the workflow manager of the pipeline.')
 
 parser.add_argument('--data_resolution', type=int, help='This argument sets which temporal resolution time series data to use (15, 30, or 60 min, default 60 min)')
-args = parser.parse_args(args=['--data_resolution', '60'])
+parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
+parser.add_argument('--model_name', type=str, help='Name of model architecture to use for forecasting')
+args = parser.parse_args(args=['--data_resolution', '60', '--date', '2026-05-17', '--model_name', 'Seq2SeqGRU'])
 
+# %% Extract relevant time series data from raw data
 if args.data_resolution not in [15, 30, 60]:
     raise ValueError('Only temporal resolutions of dataset available are 15, 30, and 60 minutes.')
 
 if args.data_resolution != 60:
     raise NotImplementedError('Only 60 minutes resolution has price ahead data in currently selected regions in this dataset')
-
-# %%
-args.data_resolution
-
-# %% Extract relevant time series data from raw data
 
 raw_data_dir = Path('data/raw')
 sel_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
@@ -61,16 +59,12 @@ run_path(
 
 # %% Visualize forecasting results
 
-model_name = 'Seq2SeqGRU'
-# Code below to pick results from specific day. This should be a feature in the dashboard web app
-# filepaths = list((Path(f'results/models/{model_name}')).glob('**/*.pth'))
-# filepath = Path("/".join(filepaths[0].parts[:-2]))
-date = Path(datetime.today().isoformat().split('T')[0])
-print('Date not provided; using today\'s data.')
-filepath = Path(f'results/models/{model_name}') / date
+filepath = Path(f'results/models/{args.model_name}/{args.date}')
 
 run_path(
     'analysis/visualize_forecast.py',
     init_globals={'filepath': filepath},
 )
 
+
+# %%
