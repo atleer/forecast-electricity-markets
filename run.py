@@ -4,14 +4,44 @@ from runpy import run_path
 from tqdm import tqdm
 from datetime import datetime
 from argparse import ArgumentParser
+import sys
 
 # %% Create argument parser
 parser = ArgumentParser(description='This program is the workflow manager of the pipeline.')
 
-parser.add_argument('--data_resolution', type=int, help='This argument sets which temporal resolution time series data to use (15, 30, or 60 min, default 60 min)')
+parser.add_argument('--data_resolution', type=int, help='This argument sets which temporal resolution time series data to use (15, 30, or 60 min; default 60 min)')
 parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
 parser.add_argument('--model_name', type=str, help='Name of model architecture to use for forecasting')
-args = parser.parse_args(args=['--data_resolution', '60', '--date', '2026-05-17', '--model_name', 'Seq2SeqGRU'])
+parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
+args = parser.parse_args(args=['--data_resolution', '60', 
+                               '--date', '2026-07-12', 
+                               '--model_name', 'Seq2SeqGRU',
+                               '--max_epochs', '10'])
+
+
+# %% Check whether google colab kernel is used and clone the repository if it is
+
+IN_COLAB = 'google.colab' in sys.modules
+
+if IN_COLAB:
+    import subprocess
+
+    # Check if clone of repository already exists
+    if not Path("forecast-electricity-markets").exists():
+        # Clone repository
+        BRANCH = None
+        cmd = ["git", "clone"]
+        if BRANCH:
+            print(f"Cloning branch {BRANCH}")
+            cmd += ["-b", BRANCH]
+        cmd.append("https://github.com/atleer/forecast-electricity-markets.git")
+        subprocess.run(
+            cmd,
+            check=True
+        )
+    root_dir = Path('forecast-electricity-markets')
+else:
+    root_dir = Path(__file__).resolve().parent.parent.parent
 
 # %% Extract relevant time series data from raw data
 if args.data_resolution not in [15, 30, 60]:
@@ -53,7 +83,10 @@ filepaths= list(processed_data_dir.glob(f'**/*{args.data_resolution}*.parquet'))
 
 run_path(
     'analysis/train_model/seq2seq.py',
-    init_globals={'filepaths': filepaths}
+    init_globals={
+        'filepaths': filepaths,
+        'max_epochs': args.max_epochs,
+    }
 );
 
 
