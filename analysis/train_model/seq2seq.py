@@ -94,8 +94,11 @@ save_checkpoint_dir = make_checkpoint_dir(model_name)
 
 from src.training.train_loops import train, train_with_early_stopping
 
-learning_rates = [0.01, 0.001]
-max_epochs = 1
+if 'max_epochs' not in globals():
+    max_epochs = 1
+
+if 'learning_rates' not in globals():
+    learning_rates = [0.01, 0.001]
 
 criterion = nn.MSELoss()
 
