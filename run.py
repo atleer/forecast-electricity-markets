@@ -13,11 +13,12 @@ parser.add_argument('--data_resolution', type=int, help='This argument sets whic
 parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
 parser.add_argument('--model_name', type=str, help='Name of model architecture to use for forecasting')
 parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
+parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
 args = parser.parse_args(args=['--data_resolution', '60', 
                                '--date', '2026-07-12', 
                                '--model_name', 'Seq2SeqGRU',
-                               '--max_epochs', '10'])
-
+                               '--max_epochs', '1',
+                               '--learning_rates', '0.01', '0.001'])
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -86,6 +87,7 @@ run_path(
     init_globals={
         'filepaths': filepaths,
         'max_epochs': args.max_epochs,
+        'learning_rates': args.learning_rates
     }
 );
 
@@ -99,5 +101,3 @@ run_path(
     init_globals={'filepath': filepath},
 )
 
-
-# %%
