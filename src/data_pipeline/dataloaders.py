@@ -5,7 +5,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Union
 from src.utils import create_sequences
-from src.data_pipeline.preprocessing import clean_and_extract_data, scale_features_and_targets
+from src.data_pipeline.preprocessing import scale_features_and_targets
 
 def load_splits(filepaths):
     """Load train, validation, and test datasets"""
@@ -42,7 +42,7 @@ def build_dataloaders(
         device: cpu or cuda
     """
 
-    df_train, df_val, df_test = load_splits(filepaths)    
+    df_train, df_val, df_test = load_splits(filepaths)
 
     # Scale data
     features_train, targets_train = scale_features_and_targets(df_train, df_train, features_column_names, targets_column_names)
