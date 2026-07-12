@@ -33,11 +33,24 @@ filepaths = list(sel_data_dir.glob(f'**/*{args.data_resolution}min*.csv'))
 
 for filepath in tqdm(filepaths, 'Extract time-series data'):
     run_path(
-        'scripts/processors/process_opsd_time_series.py',
+        'scripts/validators/validate_opsd_time_series.py',
         init_globals={
             'filepath': filepath,
         }
     )
+
+# %% Selected feature and target columns and clean data
+features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
+targets_column_names = ['DE_price_ahead']
+
+processed_data_dir = Path('data/processed')
+filepaths = list(processed_data_dir.glob(f'**/all_samples/*{args.data_resolution}*.parquet'))
+
+for filepath in tqdm(filepaths, 'Extract and clean data from selected feature and target columns'):
+    run_path(
+        'src/data_pipeline/...'
+    )
+
 
 # %% Split extracted time series data into train, validation, and test subsets
 
@@ -51,8 +64,6 @@ for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
             'filepath': filepath,
         }
     )
-
-
 # %% Do forecasting with seq2seq model
 
 processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
@@ -66,7 +77,6 @@ run_path(
         'learning_rates': args.learning_rates
     }
 );
-
 
 # %% Visualize forecasting results
 
