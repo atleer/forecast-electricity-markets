@@ -5,9 +5,27 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-# %% Set WD
-os.chdir(Path(__file__).parent.parent.parent)
-os.getcwd()
+def split_data(df: pd.DataFrame, frac_train: float = 0.7, frac_val: float = 0.15, frac_test: float = 0.15):
+    assert frac_train + frac_test + frac_val == 1.0
+    
+    n_samples_train = int(frac_train*len(df))
+    n_samples_val = int(frac_val*len(df))
+
+    df_train = df[:n_samples_train]
+    df_val = df[n_samples_train:(n_samples_train+n_samples_val)]
+    df_test = df[(n_samples_train+n_samples_val):]
+
+    subsets = {'train': df_train, 'validation': df_val, 'test': df_test}
+
+    # %% Write to files
+
+    for subset_name, df_subset in subsets.items():
+        table = pa.Table.from_pandas(df_subset)
+
+        out_dir = Path('data/processed').joinpath(filepath.parts[-3])
+        out_path = (out_dir / subset_name).joinpath(filepath.parts[-1]).with_suffix('.parquet')
+        out_path.parent.mkdir(exist_ok=True, parents=True)
+        pq.write_table(table, out_path, compression='snappy')
 
 # %% Get data paths
 if 'filepath' not in globals():
@@ -17,34 +35,7 @@ filepath
 
 # %% Read processed data
 df = pd.read_parquet(filepath)
-df
 
-# %% Remove NaNs
-valid_mask = df['DE_price_ahead'].notna()
-df_valid = df[valid_mask]
-df_valid
-# %% Split into train, validation, and test subsets
-
-frac_train = 0.7
-frac_val = 0.15
-frac_test = 1 - frac_train
-
-n_samples_train = int(frac_train*len(df_valid))
-n_samples_val = int(frac_val*len(df_valid))
-
-df_train = df_valid[:n_samples_train]
-df_val = df_valid[n_samples_train:(n_samples_train+n_samples_val)]
-df_test = df_valid[(n_samples_train+n_samples_val):]
-
-subsets = {'train': df_train, 'validation': df_val, 'test': df_test}
-
-# %% Write to files
-
-for subset_name, df_subset in subsets.items():
-    table = pa.Table.from_pandas(df_subset)
-
-    out_dir = Path('data/processed').joinpath(filepath.parts[-3])
-    out_path = (out_dir / subset_name).joinpath(filepath.parts[-1]).with_suffix('.parquet')
-    out_path.parent.mkdir(exist_ok=True, parents=True)
-    pq.write_table(table, out_path, compression='snappy')
+# %%
+split_data(df)
 
