@@ -20,30 +20,6 @@ args = parser.parse_args(args=['--data_resolution', '60',
                                '--max_epochs', '1',
                                '--learning_rates', '0.01', '0.001'])
 
-# %% Check whether google colab kernel is used and clone the repository if it is
-
-IN_COLAB = 'google.colab' in sys.modules
-
-if IN_COLAB:
-    import subprocess
-
-    # Check if clone of repository already exists
-    if not Path("forecast-electricity-markets").exists():
-        # Clone repository
-        BRANCH = None
-        cmd = ["git", "clone"]
-        if BRANCH:
-            print(f"Cloning branch {BRANCH}")
-            cmd += ["-b", BRANCH]
-        cmd.append("https://github.com/atleer/forecast-electricity-markets.git")
-        subprocess.run(
-            cmd,
-            check=True
-        )
-    root_dir = Path('forecast-electricity-markets')
-else:
-    root_dir = Path(__file__).resolve().parent.parent.parent
-
 # %% Extract relevant time series data from raw data
 if args.data_resolution not in [15, 30, 60]:
     raise ValueError('Only temporal resolutions of dataset available are 15, 30, and 60 minutes.')
