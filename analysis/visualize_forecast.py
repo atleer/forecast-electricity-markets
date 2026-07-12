@@ -1,5 +1,6 @@
 # %% Import libaries
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from pathlib import Path
 import torch
@@ -8,6 +9,7 @@ import os
 import subprocess
 import pandas as pd
 import matplotlib.dates as mdates
+matplotlib.use('Agg')
 
 # %% Change working directory to root of repository
 root_dir = Path(__file__).parent.parent
@@ -35,6 +37,7 @@ subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
 idx_lowest_valloss = min(range(len(list(load_dir.glob('**/*.pth')))), key = lambda i: float(list(load_dir.glob('**/*.pth'))[i].stem.split('=')[1]))
 path_lowest_valloss = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
 date_benchmark_model = path_lowest_valloss.parts[-3]
+run_nr_benchmark = path_lowest_valloss.parts[-2]
 model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
 # %% # Load model with lowest validation loss among models trained on specific day
@@ -53,6 +56,7 @@ if len(list(Path(filepath).glob('**/*.pth'))) == 0:
 idx_lowest_valloss = min(range(len(list(filepath.glob('**/*.pth')))), key = lambda i: float(list(filepath.glob('**/*.pth'))[i].stem.split('=')[1]))
 path_lowest_valloss = list(filepath.glob('**/*.pth'))[idx_lowest_valloss]
 date_model_selected = path_lowest_valloss.parts[-3]
+run_nr_selected = path_lowest_valloss.parts[-2]
 model_selected = torch.load(path_lowest_valloss, map_location=device)
 
 # %% Load test data
@@ -153,10 +157,10 @@ for date_model, model_to_load in models.items():
     axes[1].set_xlabel('Dates')
     plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
 
-    fig.suptitle(f'Model: {model_name} {date_model} - prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
+    fig.suptitle(f'Model: {model_name} {date_model} {run_nr_selected}- prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
     fig.legend()
     fig.tight_layout()
-    fig.savefig(f'results/figures/{model_name}_{date_model}_prediction_on_test_set', bbox_inches = 'tight');
+    fig.savefig(f'results/figures/{model_name}_{date_model}_{run_nr_selected}_prediction_on_test_set', bbox_inches = 'tight');
 
 
 # %%
