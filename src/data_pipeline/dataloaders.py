@@ -42,15 +42,7 @@ def build_dataloaders(
         device: cpu or cuda
     """
 
-    df_train, df_val, df_test = load_splits(filepaths)
-
-    df_train, df_val, df_test = clean_and_extract_data(features_column_names = features_column_names, 
-                                                        targets_column_names = targets_column_names, 
-                                                        df_train = df_train,
-                                                        df_val = df_val,
-                                                        df_test = df_test
-                                                        )
-        
+    df_train, df_val, df_test = load_splits(filepaths)    
 
     # Scale data
     features_train, targets_train = scale_features_and_targets(df_train, df_train, features_column_names, targets_column_names)
