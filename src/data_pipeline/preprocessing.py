@@ -1,6 +1,6 @@
 import pandas as pd
 
-def clean_and_extract_data(features_column_names: list, targets_column_names: list, df_train: pd.DataFrame, df_val: pd.DataFrame, df_test: pd.DataFrame):
+def clean_and_extract_data(df: pd.DataFrame, features_column_names: list, targets_column_names: list):
     """
     Extract columns that will make up features and columns that will make up targets from train, validation, and test dataframes
 
@@ -12,16 +12,11 @@ def clean_and_extract_data(features_column_names: list, targets_column_names: li
         df_test: test subset
 
     Returns:
-        df_train: training data with NaNs dropped and feature and target columns extracted
-        df_val: validation data --
-        df_test: test data --
-    
+        df: data with NaNs dropped and feature and target columns extracted
     """
-    df_train = df_train[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
-    df_val = df_val[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
-    df_test = df_test[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
+    df_clean = df[list(set(['utc_timestamp'] + features_column_names + targets_column_names))].dropna()
 
-    return df_train, df_val, df_test
+    return df_clean
 
 
 def scale_features_and_targets(df_train, df, features_column_names, targets_column_names):
