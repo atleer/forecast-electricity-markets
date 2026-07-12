@@ -157,10 +157,7 @@ for date_model, model_to_load in models.items():
     axes[1].set_xlabel('Dates')
     plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
 
-    fig.suptitle(f'Model: {model_name} {date_model} {run_nr_selected}- prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
+    fig.suptitle(f'Model: {model_name} {date_model} {run_nr_selected} - prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
     fig.legend()
     fig.tight_layout()
     fig.savefig(f'results/figures/{model_name}_{date_model}_{run_nr_selected}_prediction_on_test_set', bbox_inches = 'tight');
-
-
-# %%
