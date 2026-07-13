@@ -53,8 +53,12 @@ if len(list(Path(filepath).glob('**/*.pth'))) == 0:
         f"No model checkpoint files found in {filepath}"
     )
 
-idx_lowest_valloss = min(range(len(list(filepath.glob('**/*.pth')))), key = lambda i: float(list(filepath.glob('**/*.pth'))[i].stem.split('=')[1]))
-path_lowest_valloss = list(filepath.glob('**/*.pth'))[idx_lowest_valloss]
+
+# %%
+
+path_latest_run = sorted(p for p in filepath.iterdir() if p.is_dir())[-1]
+idx_lowest_valloss = min(range(len(list(path_latest_run.glob('**/*.pth')))), key = lambda i: float(list(filepath.glob('**/*.pth'))[i].stem.split('=')[1]))
+path_lowest_valloss = list(path_latest_run.glob('**/*.pth'))[idx_lowest_valloss]
 date_model_selected = path_lowest_valloss.parts[-3]
 run_nr_selected = path_lowest_valloss.parts[-2]
 model_selected = torch.load(path_lowest_valloss, map_location=device)
@@ -161,3 +165,6 @@ for date_model, model_to_load in models.items():
     fig.legend()
     fig.tight_layout()
     fig.savefig(f'results/figures/{model_name}_{date_model}_{run_nr_selected}_prediction_on_test_set', bbox_inches = 'tight');
+
+
+# %%

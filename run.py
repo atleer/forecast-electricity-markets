@@ -15,9 +15,9 @@ parser.add_argument('--model_name', type=str, help='Name of model architecture t
 parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
 parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
 args = parser.parse_args(args=['--data_resolution', '60', 
-                               '--date', '2026-07-12', 
+                               '--date', datetime.today().isoformat().split('T')[0], 
                                '--model_name', 'Seq2SeqGRU',
-                               '--max_epochs', '1',
+                               '--max_epochs', '2',
                                '--learning_rates', '0.01', '0.001'])
 
 # %% Extract relevant time series data from raw data
