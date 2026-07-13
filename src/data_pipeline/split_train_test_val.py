@@ -5,20 +5,24 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-def split_data(df: pd.DataFrame, frac_train: float = 0.7, frac_val: float = 0.15, frac_test: float = 0.15):
+def split_data(df: pd.DataFrame, frac_train: float = 0.7, frac_val: float = 0.15, frac_test: float = 0.15) -> dict:
     assert frac_train + frac_test + frac_val == 1.0
     
     n_samples_train = int(frac_train*len(df))
     n_samples_val = int(frac_val*len(df))
 
+    # Do split
     df_train = df[:n_samples_train]
     df_val = df[n_samples_train:(n_samples_train+n_samples_val)]
     df_test = df[(n_samples_train+n_samples_val):]
 
     subsets = {'train': df_train, 'validation': df_val, 'test': df_test}
 
-    # %% Write to files
+    return subsets
 
+def write_subsets_to_file(subsets: dict) -> None: 
+
+    # Write to file
     for subset_name, df_subset in subsets.items():
         table = pa.Table.from_pandas(df_subset)
 
@@ -37,5 +41,6 @@ filepath
 df = pd.read_parquet(filepath)
 
 # %%
-split_data(df)
+subsets = split_data(df)
+write_subsets_to_file(subsets=subsets)
 
