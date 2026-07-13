@@ -69,8 +69,7 @@ def build_dataloaders(
     X_test = torch.from_numpy(X_test).to(dtype = torch.float32, device=device)
     y_test = torch.from_numpy(y_test).to(dtype = torch.float32, device=device)
 
-    # %% Create DataLoaders
-
+    # Create DataLoaders
     train_dataset = TensorDataset(X_train, y_train)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 

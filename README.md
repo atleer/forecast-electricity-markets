@@ -23,10 +23,9 @@ Set up a data pipeline to forecast electricity prices in Europe.
 - [x] Write script to calculate metrics and visualize forecasting results.
   - [x] Add to workflow manager
 - [ ] Implement full test suite
-  - [x] Test preprocessing
-  - [x] Test splitting
-  - [ ] Test build dataloaders
-  - [ ] Test scale data
+  - [x] Test data cleaning
+  - [x] Test splitting into train, validation, and test subsets
+  - [x] Test scale data
 - [ ] Migrate to pytorch lightning
 - [ ] Implement transformer model for forecasting.
 - [ ] Implement state-of-the-art forecasting models.
