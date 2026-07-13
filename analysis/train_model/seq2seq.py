@@ -40,8 +40,6 @@ if IN_COLAB:
     root_dir = Path('forecast-electricity-markets')
 else:
     root_dir = Path(__file__).resolve().parent.parent.parent
-
-
 # %%
 os.chdir(root_dir)
 
@@ -61,12 +59,10 @@ if 'filepaths' not in globals():
     filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
     print(filepaths)
 
-# %% Choose columns to use in data
+# %% Build dataloaders
 
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
 targets_column_names = ['DE_price_ahead']
-print(f'Columns selected to be used as features: {features_column_names}')
-print(f'Columns selected to be used as targets: {targets_column_names}')
 
 input_len = 48
 horizon = 24
