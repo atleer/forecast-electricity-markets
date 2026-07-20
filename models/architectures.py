@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from dataclasses import dataclass
+
 
 class Seq2SeqGRU(nn.Module):
     def __init__(self, enc_input_size: int, dec_input_size: int, hidden_size: int = 64, num_layers: int = 1, device: str = 'cpu'):
@@ -36,3 +38,46 @@ class Seq2SeqGRU(nn.Module):
 
         # concatinate over dim 1 so that horizon is on second dimension and batches on first
         return torch.cat(predictions, dim=1)
+    
+class Transformer(nn.Module):
+    def __init__(self, 
+                 enc_input_size: int,
+                 dim_model: int, # attention dimensions
+                 num_heads: int,
+                 num_layers: int,
+                 horizon: int = 1,
+                 activation_fun: str = 'relu',
+                 learning_rate: float = 1E-3):
+        super().__init__()
+        self.input_project = nn.Linear(self.enc_input_size, self.dim_model, bias=False) # TODO: Check why bias needs to be false
+        self.positional_encoder = NotImplemented
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            dim_model = self.dim_model,
+            nhead = self.num_heads,
+            activation=self.activation_function,
+        )
+
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers = self.num_layers
+        ) # copy the encoder layer num_layers times
+
+        self.decoder = nn.Sequential(
+            nn.Linear(self.dim_model, 64),
+            nn.ReLU(),
+            nn.Linear(100, self.horizon)
+        )
+
+    def forward(self, X: torch.Tensor):
+        X_ = self.input_project(X)
+
+        X_ = self.positional_encoder(X_)
+
+        X_ = self.transformer_encoder(X_)
+
+        dec_output = self.decoder(X_)
+
+        # unfold
+        y = NotImplemented
+
+        return dec_output, y
+
