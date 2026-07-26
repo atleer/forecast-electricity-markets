@@ -4,10 +4,7 @@
 # %autoreload 2
 
 #%% Import libraries
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
-import pandas as pd
 
 import torch
 import torch.nn as nn
