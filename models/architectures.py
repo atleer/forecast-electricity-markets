@@ -43,19 +43,27 @@ class Seq2SeqGRU(nn.Module):
 class Transformer(nn.Module):
     def __init__(self, 
                  enc_input_size: int,
-                 dims_model: int, # attention dimensions, also referred to as embedding dim
+                 dim_model: int, # attention dimensions, also referred to as embedding dim
                  num_heads: int,
                  num_layers: int,
                  horizon: int = 1,
                  activation_fun: str = 'relu',
                  learning_rate: float = 1E-3):
         super().__init__()
-        self.input_project = nn.Linear(self.enc_input_size, self.dims_model, bias=False) # TODO: Check why bias needs to be false
-        self.positional_encoder = PositionalEncoding(self.dims_model)
+        self.enc_input_size = enc_input_size
+        self.dim_model = dim_model
+        self.num_heads = num_heads
+        self.num_layers = num_layers
+        self.horizon = horizon
+        self.activation_fun = activation_fun
+        self.learning_rate = learning_rate
+
+        self.input_project = nn.Linear(self.enc_input_size, self.dim_model, bias=False) # TODO: Check why bias needs to be false
+        self.positional_encoder = PositionalEncoding(self.dim_model)
         self.encoder_layer = nn.TransformerEncoderLayer(
             dim_model = self.dim_model,
             nhead = self.num_heads,
-            activation=self.activation_function,
+            activation=self.activation_fun,
         )
 
         self.transformer_encoder = nn.TransformerEncoder(
@@ -68,33 +76,36 @@ class Transformer(nn.Module):
             nn.Linear(100, self.horizon)
         )
 
-    def forward(self, X: torch.Tensor):
+    def _create_square_mask(self,):
+        raise NotImplementedError
+
+    def forward(self, X: torch.Tensor, y: torch.Tensor):
         X_ = self.input_project(X)
 
         X_ = self.positional_encoder(X_)
 
-        X_ = self.transformer_encoder(X_)
+        X_ = self.transformer_encoder(X_) # TODO: Add mask here
 
         dec_output = self.decoder(X_)
 
         # unfold
-        y = torch.cat(X[:, 1:, :], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
+        y = torch.cat([X[:, 1:, :], y], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
 
         return dec_output, y
 
 class PositionalEncoding(nn.Module):
 
-    def __init__(self, dims_model, max_len = 1000):
+    def __init__(self, dim_model, max_len = 1000):
         super().__init__()
 
-        self.positional_enc = torch.zeros(1, max_len, dims_model) # TODO: why the singleton dimension in the beginning?
+        self.positional_enc = torch.zeros(1, max_len, dim_model) # TODO: why the singleton dimension in the beginning?
 
-        numerator = torch.arange(1, max_len, dtype=torch.float32).reshape(-1,1)
-        denominator = torch.pow(10000, torch.arange(0, dims_model, 2, dtype=torch.float32) / dims_model)
+        numerator = torch.arange(0, max_len, dtype=torch.float32).reshape(-1,1) # TODO: should this start at 1?
+        denominator = torch.pow(10000, torch.arange(0, dim_model, 2, dtype=torch.float32) / dim_model)
 
         self.positional_enc[:, :, 0::2] = torch.sin(numerator/denominator) # for every 2i (even) position
         self.positional_enc[:, :, 1::2] = torch.cos(numerator/denominator) # for every 2i + 1 (odd) position
 
     def forward(self, X):
-        X += self.positional_enc[:, :X.shape[1], 1].to(X.device)
+        X = X + self.positional_enc[:, :X.shape[1], :].to(X.device)
         return X
