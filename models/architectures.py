@@ -42,7 +42,7 @@ class Seq2SeqGRU(nn.Module):
     
 class Transformer(nn.Module):
     def __init__(self, 
-                 enc_input_size: int,
+                 enc_input_size: int, # number of features in the input sequence
                  dim_model: int, # attention dimensions, also referred to as embedding dim
                  num_heads: int,
                  num_layers: int,
@@ -57,11 +57,12 @@ class Transformer(nn.Module):
         self.horizon = horizon
         self.activation_fun = activation_fun
         self.learning_rate = learning_rate
+        self._mask = None
 
         self.input_project = nn.Linear(self.enc_input_size, self.dim_model, bias=False) # TODO: Check why bias needs to be false
         self.positional_encoder = PositionalEncoding(self.dim_model)
         self.encoder_layer = nn.TransformerEncoderLayer(
-            dim_model = self.dim_model,
+            d_model = self.dim_model,
             nhead = self.num_heads,
             activation=self.activation_fun,
         )
@@ -71,15 +72,23 @@ class Transformer(nn.Module):
         ) # copy the encoder layer num_layers times
 
         self.decoder = nn.Sequential(
-            nn.Linear(self.dim_model, 64),
+            nn.Linear(self.dim_model, 100),
             nn.ReLU(),
             nn.Linear(100, self.horizon)
         )
 
-    def _create_square_mask(self,):
-        raise NotImplementedError
+    def _create_square_mask(self, seq_len):
+        if self._mask is None:
+            mask = (torch.triu(torch.ones(seq_len, seq_len)) == 1).transpose(0, 1)
+            mask[mask == 0] = float("-inf")
+            mask[mask == 1] = float(0.0)
+            self._mask = mask
+        return self._mask
 
-    def forward(self, X: torch.Tensor, y: torch.Tensor):
+
+
+
+    def forward(self, X: torch.Tensor, y: torch.Tensor, horizon: int,):
         X_ = self.input_project(X)
 
         X_ = self.positional_encoder(X_)
