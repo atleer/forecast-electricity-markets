@@ -89,17 +89,14 @@ Transformer(enc_input_size=len(features_column_names), dim_model=dim_model, num_
 from src.training.train_loops import train, train_with_early_stopping
 
 # TODO: You should use a model config dictionary
-if 'max_epochs' not in globals():
-    max_epochs = 1
+if 'model_config' not in globals():
+    model_config = dict()
 
-if 'learning_rates' not in globals():
-    learning_rates = [0.01, 0.001]
+    model_config['max_epochs'] = 1
+    model_config['learning_rates'] = [0.01, 0.001]
+    model_config['dim_model'] = 32
+    model_config['num_heads'] = 8
 
-if 'dim_model' not in globals():
-    dim_model = 32
-
-if 'num_heads' not in globals():
-    num_heads = 8
 
 criterion = nn.MSELoss()
 
