@@ -1,11 +1,22 @@
 {
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/.pixi/envs/default/bin/python"
+        },
+        {
             "name": "Debug: split test",
             "type": "debugpy",
             "request": "launch",
             "module": "pytest",
-            "args": ["tests/test_split_train_test_val.py", -s],
+            "args": [
+                "tests/test_split_train_test_val.py", -s
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
             "python": "${workspaceFolder}/.pixi/envs/default/bin/python"
