@@ -1,18 +1,17 @@
 # %% Autoreload functions for quicker checks of local module modifications
 
-%load_ext autoreload
-%autoreload 2
+# %load_ext autoreload
+# %autoreload 2
 
 #%% Import libraries
 from pathlib import Path
 
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
 
-from datetime import datetime
 import sys
 import os
+from tqdm import tqdm
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -39,6 +38,8 @@ else:
     root_dir = Path(__file__).resolve().parent.parent.parent
 # %%
 os.chdir(root_dir)
+sys.path.insert(0, str(root_dir))
+
 
 from models.architectures import Transformer
 from src.training.device import set_device
@@ -61,13 +62,21 @@ if 'filepaths' not in globals():
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
 targets_column_names = ['DE_price_ahead']
 
-input_len = 48
-horizon = 24
+if 'model_config' not in globals():
+    model_config = dict()
+
+    model_config['max_epochs'] = 1
+    model_config['learning_rates'] = [0.01, 0.001]
+    model_config['dim_model'] = 32
+    model_config['num_heads'] = 8
+    model_config['num_layers'] = 8
+    model_config['input_len'] = 48
+    model_config['horizon'] = 24
 
 train_dataloader, val_dataloader, _ = build_dataloaders(
     filepaths=filepaths,
-    input_len=input_len,
-    horizon=horizon,
+    input_len=model_config['input_len'],
+    horizon=model_config['horizon'],
     features_column_names=features_column_names,
     targets_column_names=targets_column_names,
     batch_size=256,
@@ -82,35 +91,23 @@ model_name = 'Transformer'
 
 save_checkpoint_dir = make_checkpoint_dir(model_name)
 
-# %%
-Transformer(enc_input_size=len(features_column_names), dim_model=dim_model, num_heads=num_heads, num_layers=1, horizon=horizon,)
 # %% Train model
 
 from src.training.train_loops import train, train_with_early_stopping
 
-# TODO: You should use a model config dictionary
-if 'model_config' not in globals():
-    model_config = dict()
-
-    model_config['max_epochs'] = 1
-    model_config['learning_rates'] = [0.01, 0.001]
-    model_config['dim_model'] = 32
-    model_config['num_heads'] = 8
-
-
 criterion = nn.MSELoss()
 
-for learning_rate in learning_rates:
+for learning_rate in tqdm(model_config['learning_rates']):
     model = Transformer(
-        enc_input_size=len(features_column_names), 
-        dims_model=dims_model,
-        num_heads=num_heads,
-        num_layers=1,
-        horizon=horizon,
+        enc_input_size=len(features_column_names),
+        dim_model=model_config['dim_model'],
+        num_heads=model_config['num_heads'],
+        num_layers=model_config['num_layers'], 
+        horizon=model_config['horizon'],
     )
     model.to(device)
     model.eval()
-    y_pred_val = model(X_val, horizon = horizon)
+    y_pred_val = model(X_val, y_val, horizon = model_config['horizon'])
     best_loss_val = criterion(y_pred_val, y_val)
 
     model.train()
@@ -120,13 +117,13 @@ for learning_rate in learning_rates:
     losses_train, losses_val, stopped_epoch = train_with_early_stopping(model, 
                                                     train_dataloader, 
                                                     val_dataloader,
-                                                    horizon = 24, 
+                                                    horizon = model_config['horizon'], 
                                                     optimizer = optimizer, 
-                                                    max_epochs=max_epochs
+                                                    max_epochs=model_config['max_epochs']
                                                 )
 
     model.eval()
-    y_pred_val = model(X_val, horizon = horizon)
+    y_pred_val = model(X_val, y_val, horizon = model_config['horizon'])
 
     loss_val = criterion(y_pred_val, y_val)
 
