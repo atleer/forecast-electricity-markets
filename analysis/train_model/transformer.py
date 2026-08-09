@@ -107,8 +107,8 @@ for learning_rate in tqdm(model_config['learning_rates']):
     )
     model.to(device)
     model.eval()
-    y_pred_val = model(X_val, y_val, horizon = model_config['horizon'])
-    best_loss_val = criterion(y_pred_val, y_val)
+    y_pred_val, y_true_val = model(X_val, model_config['horizon'], y_val)
+    best_loss_val = criterion(y_pred_val, y_true_val)
 
     model.train()
 

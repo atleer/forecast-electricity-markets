@@ -36,7 +36,6 @@ class Seq2SeqGRU(nn.Module):
             else:
                 dec_input = prediction
 
-
         # concatinate over dim 1 so that horizon is on second dimension and batches on first
         return torch.cat(predictions, dim=1)
     
@@ -87,7 +86,7 @@ class Transformer(nn.Module):
         return self._mask
 
 
-    def forward(self, X: torch.Tensor, y: torch.Tensor, horizon: int,):
+    def forward(self, X: torch.Tensor, horizon: int, y: torch.Tensor,):
         mask = self._create_square_mask(X.shape[1]).to(X.device)
 
         X_ = self.input_project(X)
@@ -98,8 +97,8 @@ class Transformer(nn.Module):
 
         dec_output = self.decoder(X_)
 
-        # we want to compare all predictions to all targets, not just last prediction to last target
-        y = torch.cat([X[:, 1:, :], y], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
+        # want to compare all predictions to all targets, not just last prediction to last target
+        y = torch.cat([X[:, 1:, -1:], y], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
 
         return dec_output, y
 

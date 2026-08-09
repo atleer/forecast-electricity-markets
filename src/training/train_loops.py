@@ -72,7 +72,7 @@ def train_with_early_stopping(model: nn.Module,
     """
     losses_val = []
     for (X_val_batch, y_val_batch) in val_dataloader:
-        y_pred_val = model(X_val_batch, horizon=horizon)
+        y_pred_val = model(X_val_batch, horizon, y_val_batch)
         losses_val.append(criterion(y_pred_val, y_val_batch).item())
     best_loss_val = np.mean(losses_val)
     wait = 0
