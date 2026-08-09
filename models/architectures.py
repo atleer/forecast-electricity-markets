@@ -65,6 +65,7 @@ class Transformer(nn.Module):
             d_model = self.dim_model,
             nhead = self.num_heads,
             activation=self.activation_fun,
+            batch_first=True,
         )
 
         self.transformer_encoder = nn.TransformerEncoder(
@@ -86,18 +87,18 @@ class Transformer(nn.Module):
         return self._mask
 
 
-
-
     def forward(self, X: torch.Tensor, y: torch.Tensor, horizon: int,):
+        mask = self._create_square_mask(X.shape[1]).to(X.device)
+
         X_ = self.input_project(X)
 
         X_ = self.positional_encoder(X_)
 
-        X_ = self.transformer_encoder(X_) # TODO: Add mask here
+        X_ = self.transformer_encoder(X_, mask) # TODO: Add mask here
 
         dec_output = self.decoder(X_)
 
-        # unfold
+        # we want to compare all predictions to all targets, not just last prediction to last target
         y = torch.cat([X[:, 1:, :], y], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
 
         return dec_output, y
