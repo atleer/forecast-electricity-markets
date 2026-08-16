@@ -53,9 +53,7 @@ device = set_device()
 
 if 'filepaths' not in globals():
     processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
-
     filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
-    print(filepaths)
 
 # %% Build dataloaders
 
@@ -107,7 +105,8 @@ for learning_rate in tqdm(model_config['learning_rates']):
     )
     model.to(device)
     model.eval()
-    y_pred_val, y_true_val = model(X_val, model_config['horizon'], y_val)
+    y_pred_val = model(X_val)
+    y_true_val = model.loss_targets(X_val, y_val)
     best_loss_val = criterion(y_pred_val, y_true_val)
 
     model.train()
@@ -117,15 +116,15 @@ for learning_rate in tqdm(model_config['learning_rates']):
     losses_train, losses_val, stopped_epoch = train_with_early_stopping(model, 
                                                     train_dataloader, 
                                                     val_dataloader,
-                                                    horizon = model_config['horizon'], 
                                                     optimizer = optimizer, 
                                                     max_epochs=model_config['max_epochs']
                                                 )
 
     model.eval()
-    y_pred_val = model(X_val, y_val, horizon = model_config['horizon'])
+    y_pred_val = model(X_val)
+    y_true_val = model.loss_targets(X_val, y_val)
 
-    loss_val = criterion(y_pred_val, y_val)
+    loss_val = criterion(y_pred_val, y_true_val)
 
     # save trained model
     if  loss_val < best_loss_val:
