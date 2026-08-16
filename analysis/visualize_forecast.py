@@ -6,14 +6,24 @@ from pathlib import Path
 import torch
 from datetime import datetime
 import os
+import sys
 import subprocess
 import pandas as pd
+from argparse import ArgumentParser
 import matplotlib.dates as mdates
 matplotlib.use('Agg')
+
+# %%
+
+parser = ArgumentParser(description='This program plots the forecasted day ahead price together with the true day ahead price and metrics.')
+
+parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
+args = parser.parse_args(args = ['--date', '2026-07-13'])
 
 # %% Change working directory to root of repository
 root_dir = Path(__file__).parent.parent
 os.chdir(root_dir)
+sys.path.insert(0, str(root_dir))
 
 # %% Set device
 from src.training.device import set_device
@@ -44,7 +54,7 @@ model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
 #TODO: (Maybe) add argument parser to this file where a specific date is set and remove code below
 if 'filepath' not in globals():
-    date = Path(datetime.today().isoformat().split('T')[0])
+    date = args.date #Path(datetime.today().isoformat().split('T')[0])
     print('Date not provided; using today\'s data.')
     filepath = load_dir / date
 
@@ -102,27 +112,29 @@ models = {
 }
 
 for date_model, model_to_load in models.items():
-    state_dict = model_to_load['model_state_dict']
+    if model_name == 'Seq2SeqGRU':
+        state_dict = model_to_load['model_state_dict']
 
-    # infer model arguments from shape of loaded parameters
-    # encoder input size is last dim of weights input to hidden matrix in layer 0 of encoder (first dim - ignoring batch size and sequence length - is n_features x n_hidden_states or input_size x hidden_size)
-    enc_input_size = state_dict['encoder.weight_ih_l0'].shape[-1]
-    # number of hidden states is last dim of hidden to hidden matrix (first dim is n_features x n_hidden_states)
-    hidden_size = state_dict['encoder.weight_hh_l0'].shape[-1]
-    # first dimension of fully connected layer is the number of targets (usually just 1), last dim is number of hidden states, which is what the output is calculated from
-    dec_input_size = state_dict['fc.weight'].shape[0]
+        # infer model arguments from shape of loaded parameters
+        # encoder input size is last dim of weights input to hidden matrix in layer 0 of encoder (first dim - ignoring batch size and sequence length - is n_features x n_hidden_states or input_size x hidden_size)
+        enc_input_size = state_dict['encoder.weight_ih_l0'].shape[-1]
+        # number of hidden states is last dim of hidden to hidden matrix (first dim is n_features x n_hidden_states)
+        hidden_size = state_dict['encoder.weight_hh_l0'].shape[-1]
+        # first dimension of fully connected layer is the number of targets (usually just 1), last dim is number of hidden states, which is what the output is calculated from
+        dec_input_size = state_dict['fc.weight'].shape[0]
 
-    model = Seq2SeqGRU(enc_input_size=enc_input_size, 
-                   dec_input_size=dec_input_size, 
-                   hidden_size=hidden_size, 
-                   device=device)
+        model = Seq2SeqGRU(enc_input_size=enc_input_size, 
+                    dec_input_size=dec_input_size, 
+                    hidden_size=hidden_size, 
+                    device=device)
+    else:
+        raise NotImplementedError
     
     model.load_state_dict(state_dict)
     model.eval()
 
     # Calculate model prediction on test dataset
-
-    y_pred_test = model(X_test, horizon=horizon)
+    y_pred_test = model.predict(X_test)
 
     # Take only the first horizon step of each sequence → one prediction per timestamp
     y_test_np = y_test[:, 0, 0].cpu().numpy()
