@@ -97,10 +97,11 @@ criterion = nn.MSELoss()
 
 for learning_rate in learning_rates:
     model = Seq2SeqGRU(enc_input_size=len(features_column_names), 
-                   dec_input_size = len(targets_column_names))
+                   dec_input_size = len(targets_column_names),
+                   horizon=horizon)
     model.to(device)
     model.eval()
-    y_pred_val = model(X_val, horizon = horizon)
+    y_pred_val = model(X_val)
     best_loss_val = criterion(y_pred_val, y_val)
 
     model.train()
@@ -110,13 +111,12 @@ for learning_rate in learning_rates:
     losses_train, losses_val, stopped_epoch = train_with_early_stopping(model, 
                                                     train_dataloader, 
                                                     val_dataloader,
-                                                    horizon = 24, 
                                                     optimizer = optimizer, 
                                                     max_epochs=max_epochs
                                                 )
 
     model.eval()
-    y_pred_val = model(X_val, horizon = horizon)
+    y_pred_val = model(X_val)
 
     loss_val = criterion(y_pred_val, y_val)
 

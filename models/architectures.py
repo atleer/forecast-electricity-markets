@@ -5,13 +5,23 @@ from dataclasses import dataclass
 
 
 class Seq2SeqGRU(nn.Module):
-    def __init__(self, enc_input_size: int, dec_input_size: int, hidden_size: int = 64, num_layers: int = 1, device: str = 'cpu'):
+    def __init__(self, 
+                 enc_input_size: int, 
+                 dec_input_size: int, 
+                 hidden_size: int = 64, 
+                 num_layers: int = 1, 
+                 horizon: int = 24,
+                 teacher_threshold: float = 0.5,
+                 device: str = 'cpu'):
         super().__init__()
         self.encoder = nn.GRU(input_size=enc_input_size, hidden_size=hidden_size, batch_first=True, device=device)
         self.decoder = nn.GRU(input_size=dec_input_size, hidden_size=hidden_size, batch_first=True, device=device)
         self.fc = nn.Linear(hidden_size, dec_input_size, device=device)
+        self.teacher_threshold = teacher_threshold
+        self.horizon = horizon # horizon: number of time steps into the future to forecast
 
-    def forward(self, X: torch.Tensor, horizon: int, y_teacher: torch.Tensor | None = None, teacher_threshold: float = 0.5):
+
+    def forward(self, X: torch.Tensor, y: torch.Tensor | None = None):
 
         # encode input
         enc_output, hidden = self.encoder(X)
@@ -20,7 +30,7 @@ class Seq2SeqGRU(nn.Module):
         dec_input = X[:, -1:, -1:] # dims: (batch, 1, 1)
 
         predictions = []
-        for time_step in range(horizon):
+        for time_step in range(self.horizon):
             # decode
             dec_output, hidden = self.decoder(dec_input, hidden)
 
@@ -28,16 +38,25 @@ class Seq2SeqGRU(nn.Module):
             prediction = self.fc(dec_output)
             predictions.append(prediction)
 
-            apply_teacher_forcing = (y_teacher is not None 
-                                     and torch.rand(1).item() < teacher_threshold)
+            apply_teacher_forcing = (self.training and y is not None 
+                                     and torch.rand(1).item() < self.teacher_threshold)
 
             if apply_teacher_forcing:
-                dec_input = y_teacher[:, time_step:time_step+1].unsqueeze(1)
+                dec_input = y[:, time_step:time_step+1]
             else:
                 dec_input = prediction
 
         # concatinate over dim 1 so that horizon is on second dimension and batches on first
         return torch.cat(predictions, dim=1)
+
+    def predict(self, X: torch.tensor):
+        with torch.no_grad():
+            y_pred = self.forward(X)
+        return y_pred
+
+    def loss_targets(self, X, y):
+        """For model agnostic training; return the target that the prediction should be compared to"""
+        return y
     
 class Transformer(nn.Module):
     def __init__(self, 
@@ -58,7 +77,7 @@ class Transformer(nn.Module):
         self.learning_rate = learning_rate
         self._mask = None
 
-        self.input_project = nn.Linear(self.enc_input_size, self.dim_model, bias=False) # TODO: Check why bias needs to be false
+        self.input_project = nn.Linear(self.enc_input_size, self.dim_model, bias=False) # bias is false because it is essentially just a reshape
         self.positional_encoder = PositionalEncoding(self.dim_model)
         self.encoder_layer = nn.TransformerEncoderLayer(
             d_model = self.dim_model,
@@ -85,22 +104,32 @@ class Transformer(nn.Module):
             self._mask = mask
         return self._mask
 
-
-    def forward(self, X: torch.Tensor, horizon: int, y: torch.Tensor,):
+    def forward(self, X: torch.Tensor, y: torch.Tensor | None = None):
         mask = self._create_square_mask(X.shape[1]).to(X.device)
 
         X_ = self.input_project(X)
 
         X_ = self.positional_encoder(X_)
 
-        X_ = self.transformer_encoder(X_, mask) # TODO: Add mask here
+        X_ = self.transformer_encoder(X_, mask)
 
-        dec_output = self.decoder(X_)
+        dec_output = self.decoder(X_)        
 
-        # want to compare all predictions to all targets, not just last prediction to last target
+        return dec_output
+
+    def loss_targets(self, X: torch.Tensor, y: torch.Tensor):
+        """
+        For model agnostic training; return the target that the prediction should be compared t. 
+        Want to compare all predictions to all targets, not just last prediction to last target
+        """
         y = torch.cat([X[:, 1:, -1:], y], dim=1).squeeze(-1).unfold(1, y.size(1), 1)
+        return y
 
-        return dec_output, y
+    def predict(self, X: torch.Tensor):
+        with torch.no_grad():
+            y_pred = self.forward(X)
+            y_pred = y_pred[:, -1, :].unsqueeze(1) # for prediction we only need the prediction of the last position
+        return y_pred
 
 class PositionalEncoding(nn.Module):
 
