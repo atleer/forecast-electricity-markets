@@ -17,8 +17,11 @@ matplotlib.use('Agg')
 
 parser = ArgumentParser(description='This program plots the forecasted day ahead price together with the true day ahead price and metrics.')
 
+parser.add_argument('--model_name', type=str, help='Pick the model to  calculate metrics and visualize results for')
 parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
-args = parser.parse_args(args = ['--date', '2026-07-13'])
+
+args = parser.parse_args(args = ['--model_name', 'transformer',
+                                '--date', datetime.today().isoformat().split('T')[0]])
 
 # %% Change working directory to root of repository
 root_dir = Path(__file__).parent.parent
@@ -27,14 +30,14 @@ sys.path.insert(0, str(root_dir))
 
 # %% Set device
 from src.training.device import set_device
-from models.architectures import Seq2SeqGRU
+from models.architectures import Seq2SeqGRU, Transformer
 from src.data_pipeline.dataloaders import build_dataloaders
 
 device = set_device()
 
 # %% Choose model
 if 'model_name' not in globals():
-    model_name = 'Seq2SeqGRU'
+    model_name = args.model_name
 load_dir = root_dir / Path(f'results/models/{model_name}')
 
 # %% Sync model checkpoints from google drive to local folder
@@ -54,7 +57,7 @@ model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
 #TODO: (Maybe) add argument parser to this file where a specific date is set and remove code below
 if 'filepath' not in globals():
-    date = args.date #Path(datetime.today().isoformat().split('T')[0])
+    date = args.date
     print('Date not provided; using today\'s data.')
     filepath = load_dir / date
 
@@ -103,7 +106,6 @@ _, _, test_dataloader = build_dataloaders(
 
 X_test, y_test = test_dataloader.dataset.tensors
 
-
 # %% Make figures
 
 models = {
@@ -112,7 +114,7 @@ models = {
 }
 
 for date_model, model_to_load in models.items():
-    if model_name == 'Seq2SeqGRU':
+    if model_name == 'seq2seqgru':
         state_dict = model_to_load['model_state_dict']
 
         # infer model arguments from shape of loaded parameters
@@ -127,8 +129,24 @@ for date_model, model_to_load in models.items():
                     dec_input_size=dec_input_size, 
                     hidden_size=hidden_size, 
                     device=device)
+    elif model_name == 'transformer':
+        state_dict = models[date_model_selected]['model_state_dict']
+        enc_input_size = state_dict['input_project.weight'].shape[-1]
+        model_config = models[date_model_selected]['model_config']
+        dim_model = model_config['dim_model']
+        num_heads = model_config['num_heads']
+        num_layers = model_config['num_layers']
+        horizon = model_config['horizon']
+
+        model = Transformer(
+            enc_input_size=enc_input_size,
+            dim_model=dim_model,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            horizon=horizon
+        )
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f'Model {model_name} is not yet implemented')
     
     model.load_state_dict(state_dict)
     model.eval()
