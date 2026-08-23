@@ -16,7 +16,7 @@ parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs
 parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
 args = parser.parse_args(args=['--data_resolution', '60', 
                                '--date', datetime.today().isoformat().split('T')[0], 
-                               '--model_name', 'Seq2SeqGRU',
+                               '--model_name', 'seq2seqgru',
                                '--max_epochs', '2',
                                '--learning_rates', '0.01', '0.001'])
 

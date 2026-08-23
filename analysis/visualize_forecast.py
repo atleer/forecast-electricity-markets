@@ -20,7 +20,7 @@ parser = ArgumentParser(description='This program plots the forecasted day ahead
 parser.add_argument('--model_name', type=str, help='Pick the model to  calculate metrics and visualize results for')
 parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
 
-args = parser.parse_args(args = ['--model_name', 'transformer',
+args = parser.parse_args(args = ['--model_name', 'seq2seqgru',
                                 '--date', datetime.today().isoformat().split('T')[0]])
 
 # %% Change working directory to root of repository
