@@ -39,6 +39,7 @@ else:
     root_dir = Path(__file__).resolve().parent.parent.parent
 # %%
 os.chdir(root_dir)
+sys.path.insert(0, str(root_dir))
 
 from models.architectures import Seq2SeqGRU
 from src.training.device import set_device
@@ -79,7 +80,7 @@ X_val, y_val = val_dataloader.dataset.tensors
 # %% Create directories to save results 
 # TODO: This ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
 
-model_name = 'Seq2SeqGRU'
+model_name = 'seq2seqgru'
 
 save_checkpoint_dir = make_checkpoint_dir(model_name)
 
