@@ -12,6 +12,7 @@ import torch.nn as nn
 import sys
 import os
 from tqdm import tqdm
+from datetime import datetime
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -85,7 +86,7 @@ X_val, y_val = val_dataloader.dataset.tensors
 
 # %% Create directories to save results 
 
-model_name = 'Transformer'
+model_name = 'transformer'
 
 save_checkpoint_dir = make_checkpoint_dir(model_name)
 
@@ -141,5 +142,16 @@ for learning_rate in tqdm(model_config['learning_rates']):
             "optimizer_state_dict": optimizer.state_dict(),
             "loss_validation": best_loss_val,
             "learning_rate": learning_rate,
+            "model_config": model_config
         }, filename)
-# %%
+# %% Sync local and google drive folders with model checkpoints
+import subprocess
+
+try:
+    from google.colab import drive # if it was not mounted earlier, it was run locally
+except ImportError:
+    # Copy model checkpoint to google drive if run locally
+    # local kernel: upload to google drive via rclone
+    date = Path(datetime.today().isoformat().split('T')[0])
+    gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}/{save_checkpoint_dir.name}"
+    subprocess.run(["rclone", "copy", str(save_checkpoint_dir), gdrive_dest], check=True)
