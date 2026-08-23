@@ -21,3 +21,6 @@ scratch
 
 # model checkpoints
 *.pth
+
+# figures
+results/figures
