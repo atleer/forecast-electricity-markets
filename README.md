@@ -27,18 +27,36 @@ Set up a data pipeline to forecast electricity prices in Europe.
   - [x] Test splitting into train, validation, and test subsets
   - [x] Test scale data
 - [ ] Migrate to pytorch lightning
-- [ ] Implement transformer model for forecasting.
+- [x] Implement transformer model for forecasting.
 - [ ] Implement state-of-the-art forecasting models.
 - [ ] Create dashboard web application to visualize results.
 - [ ] Expand datasets used in forecast.
 
-## Installation instructions
+## Quick Start
+
+### Installation Instructions
 
 Pixi is used to mangage this repository's environment. Click the following link and follow instructions to install pixi: https://pixi.prefix.dev/latest/installation/. Then, in your terminal, run
 
 ```
 pixi install
 ```
+
+### Run Pipeline
+
+Default mode: 
+
+```
+pixi run python run.py
+```
+
+In the default mode, a Seq2Seq model with a gated rectified unit (GRU) as the encoder and decoder is trained. Currently implemented models: Transformer and Seq2Seq with a GRU. *To be implemented soon*: training a different model by pass the model name as an argument:
+
+```
+pixi run python run.py transformer
+```
+
+Results from run will appear as figure in `results/figures`.
 
 ## Datasets
 - Downloaded from [Open Power Systems Data](https://open-power-system-data.org/) on 02.11.2025.
