@@ -5,11 +5,9 @@
 
 #%% Import libraries
 from pathlib import Path
-
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-
 from datetime import datetime
 import sys
 import os
@@ -57,18 +55,24 @@ if 'filepaths' not in globals():
     filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
     print(filepaths)
 
+# %% Create model config if not provided
+if 'model_config' not in globals():
+    model_config = dict()
+    model_config['max_epochs'] = 1
+    model_config['learning_rates'] = [0.01, 0.001]
+    model_config['input_len'] = 48
+    model_config['horizon'] = 24
+    model_config['date_run'] = datetime.today().date().isoformat()
+
 # %% Build dataloaders
 
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
 targets_column_names = ['DE_price_ahead']
 
-input_len = 48
-horizon = 24
-
 train_dataloader, val_dataloader, _ = build_dataloaders(
     filepaths=filepaths,
-    input_len=input_len,
-    horizon=horizon,
+    input_len=model_config['input_len'],
+    horizon=model_config['horizon'],
     features_column_names=features_column_names,
     targets_column_names=targets_column_names,
     batch_size=256,
@@ -88,18 +92,12 @@ save_checkpoint_dir = make_checkpoint_dir(model_name)
 
 from src.training.train_loops import train, train_with_early_stopping
 
-if 'max_epochs' not in globals():
-    max_epochs = 1
-
-if 'learning_rates' not in globals():
-    learning_rates = [0.01, 0.001]
-
 criterion = nn.MSELoss()
 
-for learning_rate in learning_rates:
+for learning_rate in model_config['learning_rates']:
     model = Seq2SeqGRU(enc_input_size=len(features_column_names), 
                    dec_input_size = len(targets_column_names),
-                   horizon=horizon)
+                   horizon=model_config['horizon'])
     model.to(device)
     model.eval()
     y_pred_val = model(X_val)
@@ -113,7 +111,7 @@ for learning_rate in learning_rates:
                                                     train_dataloader, 
                                                     val_dataloader,
                                                     optimizer = optimizer, 
-                                                    max_epochs=max_epochs
+                                                    max_epochs=model_config['max_epochs']
                                                 )
 
     model.eval()
@@ -136,6 +134,7 @@ for learning_rate in learning_rates:
             "optimizer_state_dict": optimizer.state_dict(),
             "loss_validation": best_loss_val,
             "learning_rate": learning_rate,
+            "model_config": model_config,
         }, filename)
 
 
