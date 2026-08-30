@@ -53,6 +53,7 @@ date_benchmark_model = path_lowest_valloss.parts[-3]
 run_nr_benchmark = path_lowest_valloss.parts[-2]
 model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
+
 # %% # Load model with lowest validation loss among models trained on specific day
 
 #TODO: (Maybe) add argument parser to this file where a specific date is set and remove code below
@@ -82,9 +83,7 @@ processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
 testdata_filepath = list(processed_data_dir.glob('**/*60*.parquet'))
 
 df_test = pd.read_parquet(processed_data_dir / Path('test/time_series_60min_singleindex.parquet'))
-# %%
-
-# Choose columns to use in data
+# %% Choose columns to use in data and create test dataloader
 
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
 targets_column_names = ['DE_price_ahead']
@@ -109,11 +108,19 @@ X_test, y_test = test_dataloader.dataset.tensors
 # %% Make figures
 
 models = {
-    date_benchmark_model: model_benchmark,
-    date_model_selected: model_selected
+    'model_benchmark': model_benchmark,
+    'model_selected': model_selected
 }
 
-for date_model, model_to_load in models.items():
+date_model_run = {
+    'model_benchmark': (date_benchmark_model, run_nr_benchmark),
+    'model_selected': (date_model_selected, run_nr_selected)
+}
+
+fig_path = Path(f'results/figures/{model_name}/{date_model_selected}')
+fig_path.mkdir(parents=True, exist_ok=True)
+
+for key_model, model_to_load in models.items():
     if model_name == 'seq2seqgru':
         state_dict = model_to_load['model_state_dict']
 
@@ -130,9 +137,9 @@ for date_model, model_to_load in models.items():
                     hidden_size=hidden_size, 
                     device=device)
     elif model_name == 'transformer':
-        state_dict = models[date_model_selected]['model_state_dict']
+        state_dict = model_to_load['model_state_dict']
         enc_input_size = state_dict['input_project.weight'].shape[-1]
-        model_config = models[date_model_selected]['model_config']
+        model_config = model_to_load['model_config']
         dim_model = model_config['dim_model']
         num_heads = model_config['num_heads']
         num_layers = model_config['num_layers']
@@ -191,10 +198,10 @@ for date_model, model_to_load in models.items():
     axes[1].set_xlabel('Dates')
     plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
 
-    fig.suptitle(f'Model: {model_name} {date_model} {run_nr_selected} - prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
+    fig.suptitle(f'Model: {model_name} {key_model.replace('_', ' ')} {date_model_run[key_model][1]} - prediction on test dataset\nMetrics: '+', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
     fig.legend()
     fig.tight_layout()
-    fig.savefig(f'results/figures/{model_name}_{date_model}_{run_nr_selected}_prediction_on_test_set', bbox_inches = 'tight');
+    fig.savefig(fig_path / Path(f'{key_model}_{date_model_run[key_model][0]}_{date_model_run[key_model][1]}_prediction_on_test_set'), bbox_inches = 'tight');
 
 
 # %%
