@@ -14,20 +14,30 @@ def make_checkpoint_dir(model_name: str):
     """
     date = Path(datetime.today().isoformat().split('T')[0])
 
+    # get path
+    save_checkpoint_dir = get_checkpoint_root(model_name) / date
+
+    if save_checkpoint_root.exists():
+        num_runs = len(list(save_checkpoint_dir.glob("*/")))
+        save_checkpoint_dir = save_checkpoint_dir / Path(f"Run{num_runs}")
+    else:
+        save_checkpoint_dir = save_checkpoint_dir / Path(f"Run0")
+
+    # make directory
+    save_checkpoint_dir.mkdir(exist_ok=True, parents=True)
+
+    return save_checkpoint_dir
+
+def get_checkpoint_root(model_name: str):
+
     try:
         # save to google drive if using colab kernel
         from google.colab import drive
         drive.mount('/content/drive')
 
-        save_checkpoint_dir = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model_name}') / date
+        save_checkpoint_root = Path(f'/content/drive/MyDrive/colab_notebooks/projects/forecast-electricity-markets/models/{model_name}')
     except ImportError:
             # save locally if not using colab kernel
-        save_checkpoint_dir = Path(f'results/models/{model_name}') / date
-    if save_checkpoint_dir.exists():
-        num_runs = len(list(save_checkpoint_dir.glob("*/")))
-        save_checkpoint_dir = save_checkpoint_dir / Path(f"Run{num_runs}")
-    else:
-        save_checkpoint_dir = save_checkpoint_dir / Path(f"Run0")
-    save_checkpoint_dir.mkdir(exist_ok=True, parents=True)
+        save_checkpoint_root = Path(f'results/models/{model_name}')
 
-    return save_checkpoint_dir
+    return save_checkpoint_root

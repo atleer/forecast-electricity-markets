@@ -32,13 +32,20 @@ sys.path.insert(0, str(root_dir))
 from src.training.device import set_device
 from models.architectures import Seq2SeqGRU, Transformer
 from src.data_pipeline.dataloaders import build_dataloaders
+from src.training.save_checkpoint import get_checkpoint_root
+
 
 device = set_device()
 
 # %% Choose model
 if 'model_name' not in globals():
     model_name = args.model_name
-load_dir = root_dir / Path(f'results/models/{model_name}')
+
+if 'date' not in globals():
+    date = args.date
+    print('Date not provided; using today\'s date.')
+
+load_dir = get_checkpoint_root(model_name)
 
 # %% Sync model checkpoints from google drive to local folder
 
@@ -48,9 +55,16 @@ if not IN_COLAB:
     gdrive_path = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}"
     subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
 
-# %% Evaluate Model - Make Plots and Calculate Metrics
+# %% Get filepath
 
-# Load model with lowest validation loss among all models
+filepath = load_dir / date
+
+if len(list(Path(filepath).glob('**/*.pth'))) == 0:
+    raise FileNotFoundError(
+        f"No model checkpoint files found in {filepath}"
+    )
+
+# %% Load model with lowest validation loss among all models
 idx_lowest_valloss = min(range(len(list(load_dir.glob('**/*.pth')))), key = lambda i: float(list(load_dir.glob('**/*.pth'))[i].stem.split('=')[1]))
 path_lowest_valloss = list(load_dir.glob('**/*.pth'))[idx_lowest_valloss]
 date_benchmark_model = path_lowest_valloss.parts[-3]
@@ -58,21 +72,7 @@ run_nr_benchmark = path_lowest_valloss.parts[-2]
 model_benchmark = torch.load(path_lowest_valloss, map_location=device)
 
 
-# %% # Load model with lowest validation loss among models trained on specific day
-
-#TODO: (Maybe) add argument parser to this file where a specific date is set and remove code below
-if 'filepath' not in globals():
-    date = args.date
-    print('Date not provided; using today\'s data.')
-    filepath = load_dir / date
-
-if len(list(Path(filepath).glob('**/*.pth'))) == 0:
-    raise FileNotFoundError(
-        f"No model checkpoint files found in {filepath}"
-    )
-
-
-# %%
+# %% # Load latest trained model
 
 path_latest_run = sorted(p for p in filepath.iterdir() if p.is_dir())[-1]
 idx_lowest_valloss = min(range(len(list(path_latest_run.glob('**/*.pth')))), key = lambda i: float(list(filepath.glob('**/*.pth'))[i].stem.split('=')[1]))
@@ -208,4 +208,6 @@ for key_model, model_to_load in models.items():
     fig.savefig(fig_path / Path(f'{key_model}_{date_model_run[key_model][0]}_{date_model_run[key_model][1]}_prediction_on_test_set'), bbox_inches = 'tight');
 
 
+# %%
+fig_path
 # %%

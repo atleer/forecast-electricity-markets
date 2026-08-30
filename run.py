@@ -6,6 +6,32 @@ from datetime import datetime
 from argparse import ArgumentParser
 import sys
 
+# %% Check whether google colab kernel is used and clone the repository if it is
+
+IN_COLAB = 'google.colab' in sys.modules
+
+if IN_COLAB:
+    import subprocess
+    import os
+
+    # Check if clone of repository already exists
+    if not Path("forecast-electricity-markets").exists():
+        # Clone repository
+        BRANCH = None
+        cmd = ["git", "clone"]
+        if BRANCH:
+            print(f"Cloning branch {BRANCH}")
+            cmd += ["-b", BRANCH]
+        cmd.append("https://github.com/atleer/forecast-electricity-markets.git")
+        subprocess.run(
+            cmd,
+            check=True
+        )
+    root_dir = Path('forecast-electricity-markets')
+    os.chdir(root_dir)
+    sys.path.insert(0, str(root_dir))
+
+
 # %% Create argument parser
 parser = ArgumentParser(description='This program is the workflow manager of the pipeline.')
 
@@ -19,6 +45,8 @@ args = parser.parse_args(args=['--data_resolution', '60',
                                '--model_name', 'seq2seqgru',
                                '--max_epochs', '2',
                                '--learning_rates', '0.01', '0.001'])
+
+
 
 # %% Extract relevant time series data from raw data
 if args.data_resolution not in [15, 30, 60]:
@@ -87,12 +115,10 @@ run_path(
 
 # %% Visualize forecasting results
 
-filepath = Path(f'results/models/{args.model_name}/{args.date}')
-
 run_path(
     'analysis/visualize_forecast.py',
     init_globals={
-        'filepath': filepath,
+        'date': args.date,
         'model_name': args.model_name
     },
 );
