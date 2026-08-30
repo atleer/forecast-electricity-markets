@@ -15,7 +15,7 @@ parser.add_argument('--model_name', type=str, help='Name of model architecture t
 parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
 parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
 args = parser.parse_args(args=['--data_resolution', '60', 
-                               '--date', datetime.today().isoformat().split('T')[0], 
+                               '--date', datetime.today().date().isoformat(), 
                                '--model_name', 'seq2seqgru',
                                '--max_epochs', '2',
                                '--learning_rates', '0.01', '0.001'])
@@ -91,8 +91,11 @@ filepath = Path(f'results/models/{args.model_name}/{args.date}')
 
 run_path(
     'analysis/visualize_forecast.py',
-    init_globals={'filepath': filepath},
-)
+    init_globals={
+        'filepath': filepath,
+        'model_name': args.model_name
+    },
+);
 
 
 # %%
