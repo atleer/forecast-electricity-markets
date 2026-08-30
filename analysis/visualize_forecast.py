@@ -41,8 +41,12 @@ if 'model_name' not in globals():
 load_dir = root_dir / Path(f'results/models/{model_name}')
 
 # %% Sync model checkpoints from google drive to local folder
-gdrive_path = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}"
-subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
+
+IN_COLAB = 'google.colab' in sys.modules
+
+if not IN_COLAB:
+    gdrive_path = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}"
+    subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
 
 # %% Evaluate Model - Make Plots and Calculate Metrics
 
