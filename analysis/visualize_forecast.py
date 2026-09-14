@@ -33,7 +33,7 @@ from src.training.device import set_device
 from models.architectures import Seq2SeqGRU, Transformer
 from src.data_pipeline.dataloaders import build_dataloaders
 from src.training.save_checkpoint import get_checkpoint_root
-
+from src.utils import rclone_bin
 
 device = set_device()
 
@@ -53,8 +53,8 @@ IN_COLAB = 'google.colab' in sys.modules
 
 if not IN_COLAB:
     gdrive_path = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}"
-    subprocess.run(["rclone", 'copy', gdrive_path, str(load_dir)], check=True)
-
+    subprocess.run([rclone_bin(), "copy", gdrive_path, str(load_dir)], check=True)
+    
 # %% Get filepath
 
 filepath = load_dir / date

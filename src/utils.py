@@ -1,5 +1,7 @@
 
 import numpy as np
+import shutil, sys
+from pathlib import Path
 
 
 def create_sequences(features, targets, input_len: int = 48, horizon: int = 24):
@@ -29,3 +31,15 @@ def create_sequences(features, targets, input_len: int = 48, horizon: int = 24):
             y[i_sample,:,i_feature] = targets[(i_sample + input_len):(i_sample + input_len + horizon), i_feature]
 
     return np.array(X), np.array(y)
+
+
+def rclone_bin() -> str:
+    """Absolute path to rclone."""
+    exe = "rclone.exe" if sys.platform == "win32" else "rclone"
+    return shutil.which("rclone") or str(Path(sys.prefix) / "bin" / exe)
+
+def clone_repo_for_colab():
+    raise NotImplementedError
+
+    
+

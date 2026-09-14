@@ -5,10 +5,8 @@
 
 #%% Import libraries
 from pathlib import Path
-
 import torch
 import torch.nn as nn
-
 import sys
 import os
 from tqdm import tqdm
@@ -41,12 +39,13 @@ else:
 os.chdir(root_dir)
 sys.path.insert(0, str(root_dir))
 
-
 from models.architectures import Transformer
 from src.training.device import set_device
 from src.training.save_checkpoint import make_checkpoint_dir
 from src.training.reproducibility import set_seed
 from src.data_pipeline.dataloaders import build_dataloaders
+from src.utils import rclone_bin
+
 
 SEED = 2026
 set_seed(SEED)
@@ -147,11 +146,9 @@ for learning_rate in tqdm(model_config['learning_rates']):
 # %% Sync local and google drive folders with model checkpoints
 import subprocess
 
-try:
-    from google.colab import drive # if it was not mounted earlier, it was run locally
-except ImportError:
+if not IN_COLAB:
     # Copy model checkpoint to google drive if run locally
     # local kernel: upload to google drive via rclone
     date = Path(datetime.today().isoformat().split('T')[0])
     gdrive_dest = f"gdrive:colab_notebooks/projects/forecast-electricity-markets/models/{model_name}/{date}/{save_checkpoint_dir.name}"
-    subprocess.run(["rclone", "copy", str(save_checkpoint_dir), gdrive_dest], check=True)
+    subprocess.run([rclone_bin(), "copy", str(save_checkpoint_dir), gdrive_dest], check=True)
