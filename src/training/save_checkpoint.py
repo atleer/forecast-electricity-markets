@@ -17,7 +17,7 @@ def make_checkpoint_dir(model_name: str):
     # get path
     save_checkpoint_dir = get_checkpoint_root(model_name) / date
 
-    if save_checkpoint_root.exists():
+    if save_checkpoint_dir.exists():
         num_runs = len(list(save_checkpoint_dir.glob("*/")))
         save_checkpoint_dir = save_checkpoint_dir / Path(f"Run{num_runs}")
     else:
