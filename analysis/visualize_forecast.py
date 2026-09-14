@@ -30,7 +30,7 @@ sys.path.insert(0, str(root_dir))
 
 # %% Set device
 from src.training.device import set_device
-from models.architectures import Seq2SeqGRU, Transformer
+from models.deep_learning.architectures import Seq2SeqGRU, Transformer
 from src.data_pipeline.dataloaders import build_dataloaders
 from src.training.save_checkpoint import get_checkpoint_root
 from src.utils import rclone_bin

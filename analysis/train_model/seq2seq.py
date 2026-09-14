@@ -39,7 +39,7 @@ else:
 os.chdir(root_dir)
 sys.path.insert(0, str(root_dir))
 
-from models.architectures import Seq2SeqGRU
+from models.deep_learning.architectures import Seq2SeqGRU
 from src.training.device import set_device
 from src.training.save_checkpoint import make_checkpoint_dir
 from src.training.reproducibility import set_seed
