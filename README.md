@@ -13,9 +13,11 @@ Set up a data pipeline to forecast electricity prices in Europe.
 - [x] Write script to split processed dataset into train, validation, and test datasets.
 - [x] Set up version control of processed data (potentially with DVC)
   - [ ] Set up online remote repository for data. Currently only local remote.
-- [x] Write script for training classic Seq2Seq model.
-  - [ ] Modularize code.
-    - Note: Partially modularized
+- [x] Implement classic Seq2Seq model.
+- [ ] Implement various benchmark models.
+  - [ ] Moving average
+  - [ ] Naive seasonal forecast
+  - [ ] ARIMA
 - [x] Make it possible to train model with Google Colab kernel in VS code for GPU capability.
 - [x] Add automatic saving of model checkpoints and syncing of saved models to Google Drive.
 - [x] Write workflow manager script.
@@ -27,7 +29,7 @@ Set up a data pipeline to forecast electricity prices in Europe.
   - [x] Test splitting into train, validation, and test subsets
   - [x] Test scale data
 - [ ] Migrate to pytorch lightning
-- [x] Implement transformer model for forecasting.
+- [x] Implement transformer model.
 - [ ] Implement state-of-the-art forecasting models.
 - [ ] Create dashboard web application to visualize results.
 - [ ] Expand datasets used in forecast.
