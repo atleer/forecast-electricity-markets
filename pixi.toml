@@ -28,6 +28,7 @@ pytest = ">=9.0.2,<10"
 dvc = ">=3.67.0,<4"
 rclone = ">=1.74.0,<2"
 missingno = ">=0.5.2,<0.6"
+xgboost = ">=3.4.1,<4"
 
 [pypi-dependencies]
 scikit-na = ">=0.3.0"
