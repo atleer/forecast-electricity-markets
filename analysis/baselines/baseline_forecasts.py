@@ -69,8 +69,39 @@ _, _, df_test = load_splits(filepaths=filepaths)
 model_name = 'baselines'
 
 save_checkpoint_dir = make_checkpoint_dir(model_name)
+# %%
+seasonal_decompose?
 
-# %% Decompose into trend, seasonality and residuals
+# %%
+
+df_test['utc_timestamp']
+# %% Decompose into trend, seasonality and residuals (NOTE: Time period of test data not long enough to get seasonality)
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+
+series = df_test.set_index('utc_timestamp')[targets_column_names[0]]
+
+# additive model
+decomposition_additive = seasonal_decompose(series, model = 'additive', )
+
+fig = decomposition_additive.plot()
+fig.suptitle('Decomposition of Day Ahead Price using Additive Model', fontsize=14)
+ax = fig.axes[-1]
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+ax.xaxis.set_major_locator(mdates.MonthLocator())
+ax = fig.axes[0]
+ax.set_ylabel('Price (€/MWh)')
+
+# %%
+
+# multiplicative model
+# decomposition_mult = seasonal_decompose(df_test[targets_column_names], model = 'multiplicative', period=365)
+
+# plt.figure()
+# decomposition_mult.plot()
+# plt.suptitle('Decomposition of Day Ahead Price using Multiplicative Model', fontsize=14)
+
+
 
 
 # %%
@@ -90,6 +121,7 @@ plt.plot(test_dates, y_test.mean(axis=(1,2)), label='Data')
 plt.plot(test_dates, y_pred, label = 'Moving Avg.')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+plt.title('Moving average')
 
 
 
