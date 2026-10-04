@@ -10,11 +10,12 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser('This script splits the dataset into train, validation, and test subsets')
 
-parser.add_argument('--train', type=float, default=0.7, help='Set fraction of data to put into train subset')
-parser.add_argument('--val', type=float, default=0.15, help='Set fraction of data to put into validation subset')
-parser.add_argument('--test', type=float, default=0.15, help='Set fraction of data to put into test subset')
+parser.add_argument('--train', type=float, help='Set fraction of data to put into train subset')
+parser.add_argument('--val', type=float, help='Set fraction of data to put into validation subset')
+parser.add_argument('--test', type=float, help='Set fraction of data to put into test subset')
 
-args = parser.parse_args()
+args = parser.parse_args(args=['--train', '0.7', '--val', '0.15', '--test', '0.15'])
+
 
 if 'frac_train' not in globals():
     frac_train = args.train
@@ -60,7 +61,7 @@ def split_and_write_subsets_to_file(df, frac_train: float = 0.7, frac_val: float
 # %% Get data paths
 if 'filepath' not in globals():
     processed_data_dir = Path('data/processed')
-    filepath = list(processed_data_dir.glob('**/all_samples/*60*.parquet'))[0]
+    filepath = list(processed_data_dir.glob('**/features_and_targets_extracted/*60*.parquet'))[0]
 filepath
 
 # %% Read processed data
