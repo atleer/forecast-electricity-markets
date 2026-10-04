@@ -20,13 +20,18 @@ def split_data(df: pd.DataFrame, frac_train: float = 0.7, frac_val: float = 0.15
 
     return subsets
 
-def write_subsets_to_file(subsets: dict) -> None: 
+def split_and_write_subsets_to_file(df, frac_train: float = 0.7, frac_val: float = 0.15, frac_test: float = 0.15) -> None:
+
+    subsets = split_data(df, frac_train = frac_train, frac_val = frac_val, frac_test = frac_test)
+
+    split_dir_name = f'{int(100*frac_train)}_{int(100*frac_val)}_{int(100*frac_test)}'
+    print(f'Train validation test split: {int(100*frac_train)} {int(100*frac_val)} {int(100*frac_test)}')
 
     # Write to file
     for subset_name, df_subset in subsets.items():
         table = pa.Table.from_pandas(df_subset)
 
-        out_dir = Path('data/processed').joinpath(filepath.parts[-3])
+        out_dir = Path(f'data/processed').joinpath(filepath.parts[-3]) / Path(f'splits/{split_dir_name}')
         out_path = (out_dir / subset_name).joinpath(filepath.parts[-1]).with_suffix('.parquet')
         out_path.parent.mkdir(exist_ok=True, parents=True)
         pq.write_table(table, out_path, compression='snappy')
@@ -41,6 +46,9 @@ filepath
 df = pd.read_parquet(filepath)
 
 # %%
-subsets = split_data(df)
-write_subsets_to_file(subsets=subsets)
+frac_train = 0.7
+frac_val =  0.15
+frac_test = 1-frac_val-frac_train
+
+split_and_write_subsets_to_file(df, frac_train, frac_val, frac_test)
 
