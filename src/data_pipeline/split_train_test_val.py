@@ -4,9 +4,30 @@ from pathlib import Path
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+from argparse import ArgumentParser
+
+# %% Argument parser
+
+parser = ArgumentParser('This script splits the dataset into train, validation, and test subsets')
+
+parser.add_argument('--train', type=float, default=0.7, help='Set fraction of data to put into train subset')
+parser.add_argument('--val', type=float, default=0.15, help='Set fraction of data to put into validation subset')
+parser.add_argument('--test', type=float, default=0.15, help='Set fraction of data to put into test subset')
+
+args = parser.parse_args()
+
+if 'frac_train' not in globals():
+    frac_train = args.train
+
+if 'frac_val' not in globals():
+    frac_val = args.val
+
+if 'frac_test' not in globals():
+    frac_test = args.test
+
+# %% Define functions
 
 def split_data(df: pd.DataFrame, frac_train: float = 0.7, frac_val: float = 0.15, frac_test: float = 0.15) -> dict:
-    assert frac_train + frac_test + frac_val == 1.0
     
     n_samples_train = int(frac_train*len(df))
     n_samples_val = int(frac_val*len(df))
@@ -46,9 +67,6 @@ filepath
 df = pd.read_parquet(filepath)
 
 # %%
-frac_train = 0.7
-frac_val =  0.15
-frac_test = 1-frac_val-frac_train
 
 split_and_write_subsets_to_file(df, frac_train, frac_val, frac_test)
 
