@@ -66,15 +66,10 @@ _, _, df_test = load_splits(filepaths=filepaths)
 
 # %% Create directories to save results 
 
-model_name = 'baselines'
+model_name = 'baseline'
 
 save_checkpoint_dir = make_checkpoint_dir(model_name)
-# %%
-seasonal_decompose?
 
-# %%
-
-df_test['utc_timestamp']
 # %% Decompose into trend, seasonality and residuals (NOTE: Time period of test data not long enough to get seasonality)
 from statsmodels.tsa.seasonal import seasonal_decompose
 
