@@ -19,9 +19,13 @@ parser = ArgumentParser(description='This program plots the forecasted day ahead
 
 parser.add_argument('--model_name', type=str, help='Pick the model to  calculate metrics and visualize results for')
 parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
-
-args = parser.parse_args(args = ['--model_name', 'seq2seqgru',
-                                '--date', datetime.today().isoformat().split('T')[0]])
+parser.add_argument('--split', type=str, help='Specify which train validation test data split to use')
+args = parser.parse_args(
+    args = ['--model_name', 'seq2seqgru',
+            '--date', datetime.today().isoformat().split('T')[0],
+            '--split', '70_15_15'
+    ]
+)
 
 # %% Change working directory to root of repository
 root_dir = Path(__file__).parent.parent
@@ -44,6 +48,9 @@ if 'model_name' not in globals():
 if 'date' not in globals():
     date = args.date
     print('Date not provided; using today\'s date.')
+
+if 'split' not in globals():
+    split = args.split
 
 load_dir = get_checkpoint_root(model_name)
 
@@ -83,10 +90,12 @@ model_selected = torch.load(path_lowest_valloss, map_location=device)
 
 # %% Load test data
 # NOTE: Uneccessary to load from train and val folders as well here, but will have to refactor build_dataloaders if I don't load them
-processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
-testdata_filepath = list(processed_data_dir.glob('**/*60*.parquet'))
+processed_data_dir = Path(f'data/processed/opsd-time_series-2020-10-06/splits/{split}')
+testdata_filepath = list(processed_data_dir.glob('**/test/*60*.parquet'))
+train_val_test_filepahts = list(processed_data_dir.glob('**/*60*.parquet'))
 
-df_test = pd.read_parquet(processed_data_dir / Path('test/time_series_60min_singleindex.parquet'))
+
+df_test = pd.read_parquet(testdata_filepath[0])
 # %% Choose columns to use in data and create test dataloader
 
 features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_ahead']
@@ -98,7 +107,7 @@ input_len = 48
 horizon = 24
 
 _, _, test_dataloader = build_dataloaders(
-    filepaths=testdata_filepath,
+    filepaths=train_val_test_filepahts,
     input_len=input_len,
     horizon=horizon,
     features_column_names=features_column_names,

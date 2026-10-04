@@ -11,6 +11,12 @@ from torch.utils.data import TensorDataset, DataLoader
 from datetime import datetime
 import sys
 import os
+from argparse import ArgumentParser
+
+# %%
+parser = ArgumentParser(description='This program trains a Seq2Seq model')
+parser.add_argument('--split', type=str, default='70_15_15', help='Specify which train validation test data split to use')
+args = parser.parse_args(args=['--split', '70_15_15'])
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -50,11 +56,14 @@ SEED = 2026
 set_seed(SEED)
 device = set_device()
 
-if 'filepaths' not in globals():
-    processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
+# %% Set train validation test split to use
+if 'split' not in globals():
+    split = args.split
 
-    filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
-    print(filepaths)
+#if 'filepaths' not in globals():
+processed_data_dir = Path(f'data/processed/opsd-time_series-2020-10-06/splits/{split}')
+
+filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
 
 # %% Create model config if not provided
 if 'model_config' not in globals():
@@ -81,7 +90,6 @@ train_dataloader, val_dataloader, _ = build_dataloaders(
 )
 
 X_val, y_val = val_dataloader.dataset.tensors
-
 # %% Create directories to save results 
 # TODO: This ought to be part of run cell, otherwise user have to remember to run this cell before each training to not override results when running interactively, but doesn't work for some reason
 
