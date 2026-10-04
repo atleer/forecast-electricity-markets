@@ -32,7 +32,7 @@ Set up a data pipeline to forecast electricity prices in Europe.
   - [ ] ARIMA
 - [ ] Implement state-of-the-art forecasting models.
 - [ ] Create dashboard web application to visualize results.
-- [ ] Expand datasets used in forecast.
+- [ ] Expand datasets used in forecast to more recent data and other countries. Currently only Germany. 
 
 ## Quick Start
 
