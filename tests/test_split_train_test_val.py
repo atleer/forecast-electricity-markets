@@ -10,8 +10,7 @@ os.chdir(Path(__file__).parent.parent)
 
 # %% 
 
-from src.data_pipeline.split_train_test_val import split_data, write_subsets_to_file
-
+from src.data_pipeline.split_train_test_val import split_data, split_and_write_subsets_to_file
 # %% Generate synthetic data for tests
 
 @pytest.fixture
