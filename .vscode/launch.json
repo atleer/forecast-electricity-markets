@@ -5,9 +5,10 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal",
             "justMyCode": false,
-            "python": "${workspaceFolder}/.pixi/envs/default/bin/python"
+            "console": "integratedTerminal",
+            "windows": { "python": "${workspaceFolder}/.pixi/envs/default/python.exe" },
+            "linux":   { "python": "${workspaceFolder}/.pixi/envs/default/bin/python" }
         },
         {
             "name": "Debug: split test",
@@ -15,11 +16,19 @@
             "request": "launch",
             "module": "pytest",
             "args": [
-                "tests/test_split_train_test_val.py", -s
+                "tests/test_split_train_test_val.py", "-s"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
-            "python": "${workspaceFolder}/.pixi/envs/default/bin/python"
+            "windows": { "python": "${workspaceFolder}/.pixi/envs/default/python.exe" },
+            "linux":   { "python": "${workspaceFolder}/.pixi/envs/default/bin/python" }
+        },
+        {
+            "name": "Attach to pixi debugpy",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {"host": "localhost", "port": 5678},
+            "justMyCode": false
         }
     ]
 }
