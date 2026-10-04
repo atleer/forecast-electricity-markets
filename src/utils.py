@@ -38,8 +38,5 @@ def rclone_bin() -> str:
     exe = "rclone.exe" if sys.platform == "win32" else "rclone"
     return shutil.which("rclone") or str(Path(sys.prefix) / "bin" / exe)
 
-def clone_repo_for_colab():
-    raise NotImplementedError
-
     
 
