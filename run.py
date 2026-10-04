@@ -40,11 +40,18 @@ parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model
 parser.add_argument('--model_name', type=str, help='Name of model architecture to use for forecasting')
 parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
 parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
+parser.add_argument('--train', type=float, default=0.7, help='Set fraction of data to put into train subset')
+parser.add_argument('--val', type=float, default=0.15, help='Set fraction of data to put into validation subset')
+parser.add_argument('--test', type=float, default=0.15, help='Set fraction of data to put into test subset')
 args = parser.parse_args(args=['--data_resolution', '60', 
                                '--date', datetime.today().date().isoformat(), 
                                '--model_name', 'seq2seqgru',
                                '--max_epochs', '2',
-                               '--learning_rates', '0.01', '0.001'])
+                               '--learning_rates', '0.01', '0.001',
+                               '--train', '0.7',
+                               '--val', '0.15',
+                               '--test', '0.15']
+                               )
 
 
 
@@ -96,6 +103,9 @@ for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
         'src/data_pipeline/split_train_test_val.py',
         init_globals={
             'filepath': filepath,
+            'frac_train': args.train,
+            'frac_val': args.val,
+            'frac_test': args.test
         }
     )
 
