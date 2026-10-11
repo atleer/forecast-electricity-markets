@@ -5,6 +5,8 @@ from tqdm import tqdm
 from datetime import datetime
 from argparse import ArgumentParser
 import sys
+import json
+
 
 # %% Check whether google colab kernel is used and clone the repository if it is
 
@@ -32,39 +34,29 @@ if IN_COLAB:
     sys.path.insert(0, str(root_dir))
 
 
-# %% Create argument parser
-parser = ArgumentParser(description='This program is the workflow manager of the pipeline.')
+# %% Configure parameters for run
 
-parser.add_argument('--data_resolution', type=int, help='This argument sets which temporal resolution time series data to use (15, 30, or 60 min; default 60 min)')
-parser.add_argument('--date', type=str, help='Format: YYYY-MM-DD. Pick the model checkpoint to calculate metrics and visualize results by providing the date that model training was started.')
-parser.add_argument('--model_name', type=str, help='Name of model architecture to use for forecasting')
-parser.add_argument('--max_epochs', type=int, help='Set maximum number of epochs to train for')
-parser.add_argument('--learning_rates', nargs='+', type=float, help='Set learning rate parameters to sweep in training')
-parser.add_argument('--train', type=float, default=0.7, help='Set fraction of data to put into train subset')
-parser.add_argument('--val', type=float, default=0.15, help='Set fraction of data to put into validation subset')
-parser.add_argument('--test', type=float, default=0.15, help='Set fraction of data to put into test subset')
-args = parser.parse_args(args=['--data_resolution', '60', 
-                               '--date', datetime.today().date().isoformat(), 
-                               '--model_name', 'seq2seqgru',
-                               '--max_epochs', '2',
-                               '--learning_rates', '0.01', '0.001',
-                               '--train', '0.7',
-                               '--val', '0.15',
-                               '--test', '0.15']
-                               )
-
-
+config = {
+    "data_resolution": 60,
+    "date": datetime.today().date().isoformat(),
+    "model_name": 'seq2seqgru',
+    "max_epochs": 2,
+    "learning_rates": [0.01, 0.001],
+    "train_split": 0.7,
+    "val_split": 0.15,
+    "test_split": 0.15
+}
 
 # %% Extract relevant time series data from raw data
-if args.data_resolution not in [15, 30, 60]:
+if config['data_resolution'] not in [15, 30, 60]:
     raise ValueError('Only temporal resolutions of dataset available are 15, 30, and 60 minutes.')
 
-if args.data_resolution != 60:
+if config['data_resolution'] != 60:
     raise NotImplementedError('Only 60 minutes resolution has price ahead data in currently selected regions in this dataset')
 
 raw_data_dir = Path('data/raw')
 sel_data_dir = raw_data_dir / 'from_opsd/opsd-time_series-2020-10-06'
-filepaths = list(sel_data_dir.glob(f'**/*{args.data_resolution}min*.csv'))
+filepaths = list(sel_data_dir.glob(f'**/*{config["data_resolution"]}min*.csv'))
 
 for filepath in tqdm(filepaths, 'Extract time-series data'):
     run_path(
@@ -80,7 +72,7 @@ features_column_names = ['DE_wind_generation', 'DE_solar_generation', 'DE_price_
 targets_column_names = ['DE_price_ahead']
 
 processed_data_dir = Path('data/processed')
-filepaths = list(processed_data_dir.glob(f'**/all_samples/*{args.data_resolution}*.parquet'))
+filepaths = list(processed_data_dir.glob(f'**/all_samples/*{config["data_resolution"]}*.parquet'))
 
 for filepath in tqdm(filepaths, 'Extract and clean data from selected feature and target columns'):
     run_path(
@@ -95,7 +87,7 @@ for filepath in tqdm(filepaths, 'Extract and clean data from selected feature an
 # %% Split extracted time series data into train, validation, and test subsets
 
 processed_data_dir = Path('data/processed')
-filepaths = list(processed_data_dir.glob(f'**/features_and_targets_extracted/*{args.data_resolution}*.parquet'))
+filepaths = list(processed_data_dir.glob(f'**/features_and_targets_extracted/*{config["data_resolution"]}*.parquet'))
 filepaths
 
 for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
@@ -103,23 +95,23 @@ for filepath in tqdm(filepaths, 'Split into train, val, and test subsets'):
         'src/data_pipeline/split_train_test_val.py',
         init_globals={
             'filepath': filepath,
-            'frac_train': args.train,
-            'frac_val': args.val,
-            'frac_test': args.test
+            'frac_train': config['train_split'],
+            'frac_val': config['val_split'],
+            'frac_test': config['test_split']
         }
     )
 
 # %% Do forecasting with seq2seq model
 
 processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
-filepaths = list(processed_data_dir.glob(f'**/*{args.data_resolution}*.parquet'))
+filepaths = list(processed_data_dir.glob(f'**/*{config['data_resolution']}*.parquet'))
 
 run_path(
     'analysis/train_model/seq2seq.py',
     init_globals={
         'filepaths': filepaths,
-        'max_epochs': args.max_epochs,
-        'learning_rates': args.learning_rates
+        'max_epochs': config['max_epochs'],
+        'learning_rates': config['learning_rates']
     }
 );
 
@@ -128,8 +120,8 @@ run_path(
 run_path(
     'analysis/visualize_forecast.py',
     init_globals={
-        'date': args.date,
-        'model_name': args.model_name
+        'date': config['date'],
+        'model_name': config['model_name']
     },
 );
 
