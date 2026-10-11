@@ -74,9 +74,9 @@ def build_dataloaders(
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     val_dataset = TensorDataset(X_val, y_val)
-    val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False) if len(val_dataset) > 0 else None
 
     test_dataset = TensorDataset(X_test, y_test)
-    test_dataloader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False) if len(test_dataset) > 0 else None
 
     return train_dataloader, val_dataloader, test_dataloader

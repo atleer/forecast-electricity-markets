@@ -20,10 +20,12 @@ def create_sequences(features, targets, input_len: int = 48, horizon: int = 24):
 
     n_samples = len(features)
 
-    X = np.empty((n_samples - input_len - horizon, input_len, features.shape[-1]))
-    y = np.empty((n_samples - input_len - horizon, horizon, targets.shape[-1]))
+    n_windows = max(0, n_samples - input_len - horizon + 1)
 
-    for i_sample in range(n_samples - input_len - horizon):
+    X = np.empty((n_windows, input_len, features.shape[-1]))
+    y = np.empty((n_windows, horizon, targets.shape[-1]))
+
+    for i_sample in range(n_windows):
         for i_feature in range(features.shape[-1]):
             X[i_sample,:,i_feature] = features[i_sample:(i_sample + input_len), i_feature]
 
