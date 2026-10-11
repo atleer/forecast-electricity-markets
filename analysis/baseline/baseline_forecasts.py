@@ -22,6 +22,14 @@ root_dir = Path(__file__).resolve().parent.parent.parent
 os.chdir(root_dir)
 sys.path.insert(0, str(root_dir))
 
+# %% Create model config if not provided
+if 'model_config' not in globals():
+    model_config = dict()
+    model_config['input_len'] = 48
+    model_config['horizon'] = 24
+    model_config['date_run'] = datetime.today().date().isoformat()
+    model_config['data_split'] = '50_0_50'
+
 # %%
 
 from src.training.save_checkpoint import make_checkpoint_dir
@@ -35,15 +43,8 @@ set_seed(SEED)
 if 'filepaths' not in globals():
     processed_data_dir = Path('data/processed/opsd-time_series-2020-10-06')
 
-    filepaths = list(processed_data_dir.glob('**/*60*.parquet'))
-    print(filepaths)
+    filepaths = list(processed_data_dir.glob(f'**/{model_config['data_split']}/**/*60*.parquet'))
 
-# %% Create model config if not provided
-if 'model_config' not in globals():
-    model_config = dict()
-    model_config['input_len'] = 48
-    model_config['horizon'] = 24
-    model_config['date_run'] = datetime.today().date().isoformat()
 
 # %% Load data for moving average
 
@@ -77,7 +78,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 series = df_test.set_index('utc_timestamp')[targets_column_names[0]]
 
 # additive model
-decomposition_additive = seasonal_decompose(series, model = 'additive', )
+decomposition_additive = seasonal_decompose(series, model = 'additive', period = 24*7)
 
 fig = decomposition_additive.plot()
 fig.suptitle('Decomposition of Day Ahead Price using Additive Model', fontsize=14)
