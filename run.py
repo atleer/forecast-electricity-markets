@@ -79,7 +79,7 @@ for filepath in tqdm(filepaths, 'Extract and clean data from selected feature an
         'src/data_pipeline/extract_feature_and_target_data.py',
         init_globals={
             'filepath': filepath,
-            'feature_column_names': features_column_names,
+            'features_column_names': features_column_names,
             'targets_column_names': targets_column_names,
         }
     )
