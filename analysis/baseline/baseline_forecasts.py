@@ -4,6 +4,7 @@
 # %autoreload 2
 
 #%% Import libraries
+import pandas as pd
 from pathlib import Path
 import torch
 import torch.nn as nn
@@ -14,6 +15,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from statsforecast.models import MSTL, AutoARIMA
+from statsforecast import StatsForecast
+
 
 
 # %% Change working directory
@@ -63,7 +67,7 @@ _, _, test_dataloader = build_dataloaders(
 X_test, y_test = test_dataloader.dataset.tensors
 X_test, y_test = X_test.numpy(), y_test.numpy()
 
-_, _, df_test = load_splits(filepaths=filepaths)
+df_train, _, df_test = load_splits(filepaths=filepaths)
 
 # %% Create directories to save results 
 
@@ -75,10 +79,12 @@ save_checkpoint_dir = make_checkpoint_dir(model_name)
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 
-series = df_test.set_index('utc_timestamp')[targets_column_names[0]]
+series = df_train.set_index('utc_timestamp')[targets_column_names[0]]
 
 # additive model
 decomposition_additive = seasonal_decompose(series, model = 'additive', period = 24*7)
+
+# %% Plot decomposition on training data
 
 fig = decomposition_additive.plot()
 fig.suptitle('Decomposition of Day Ahead Price using Additive Model', fontsize=14)
@@ -88,7 +94,54 @@ ax.xaxis.set_major_locator(mdates.MonthLocator())
 ax = fig.axes[0]
 ax.set_ylabel('Price (€/MWh)')
 
+
 # %%
+models = [MSTL(season_length=[24, 24*7], trend_forecaster = AutoARIMA())]
+
+sf = StatsForecast(models = models, freq = 'h')
+
+
+
+# %%
+
+df_train_target = df_train[['utc_timestamp', 'DE_price_ahead']]
+df_train_target = df_train_target.rename(columns={'utc_timestamp': 'ds', 'DE_price_ahead': 'y'})
+df_train_target.insert(0, 'unique_id', 'DE_price_ahead')
+#df_train_target = df_train_target.sort_values(['unique_id', 'ds']).reset_index(drop=True)
+
+
+sf = sf.fit(df=df_train_target)
+sf
+
+# %%
+
+sf.fitted_[0, 0].model_.tail(24 * 28).plot(subplots=True, grid=True)
+plt.tight_layout()
+plt.show()
+
+# %% Seasonal forecast
+
+horizon = len(df_test)
+
+df_seasonal_forecast = sf.predict(h = horizon, level = [90])
+df_seasonal_forecast
+
+# %%
+sf.fitted_[0, 0].model_['trend']
+
+
+# %%
+
+
+# %%
+
+fig, axes = plt.subplots()
+
+axes.plot(df_seasonal_forecast['ds'][:horizon], df_seasonal_forecast['MSTL'][:horizon])
+axes.plot(df_test['utc_timestamp'][:horizon], df_test['DE_price_ahead'][:horizon])
+
+# %%
+
 
 # multiplicative model
 # decomposition_mult = seasonal_decompose(df_test[targets_column_names], model = 'multiplicative', period=365)
