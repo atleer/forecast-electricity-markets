@@ -52,13 +52,7 @@ Default mode:
 pixi run python run.py
 ```
 
-In the default mode, a Seq2Seq model with a gated rectified unit (GRU) as the encoder and decoder is trained. Currently implemented models: Transformer and Seq2Seq with a GRU. *To be implemented soon*: training a different model by pass the model name as an argument:
-
-```
-pixi run python run.py transformer
-```
-
-Results from run will appear as figure in `results/figures`.
+In the default mode, a Seq2Seq model is trained with a gated rectified unit (GRU) as both the encoder and decoder. Results will appear as figure in `results/figures`.
 
 ## Datasets
 - Downloaded from [Open Power Systems Data](https://open-power-system-data.org/) on 02.11.2025.
