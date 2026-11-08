@@ -26,7 +26,7 @@ if 'model_config' not in globals():
     model_config['input_len'] = 48
     model_config['horizon'] = 24
     model_config['date_run'] = datetime.today().date().isoformat()
-    model_config['data_split'] = '50_0_50'
+    model_config['data_split'] = '70_0_30'
 
 # %% Load functions
 from src.training.save_checkpoint import make_checkpoint_dir
@@ -103,26 +103,32 @@ df_test_target.insert(0, 'unique_id', 'DE_price_ahead')
 df_all = pd.concat([df_train_target, df_test_target])
 df_all
 
-# %%
-idx_origin_prediction_start
+
 
 # %% Do rolling evaluation
 
 # This is with expanding window. Can be done with sliding window
-idx_origin_prediction_start = len(df_train_target) + 48
-horizon = 24
-for idx_end_input_window in range(idx_origin_prediction_start, idx_origin_prediction_start + 1): # len(df_all)):
+seasonal_forecasts = []
+input_len = model_config['input_len']
+horizon = model_config['horizon']
+refit_step = 12 # not used
+idx_origin_prediction_start = len(df_train_target) + input_len
+
+for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_start, idx_origin_prediction_start + 4)): # len(df_all)) - horizon
     df_input = df_all.iloc[:idx_end_input_window]
     print(idx_end_input_window, len(df_input))
-    sf.fit(df = df_input)
-    df_seasonal_forecast = sf.predict(h=horizon)
+    if idx_end_input_window == idx_origin_prediction_start:
+        sf.fit(df = df_input)
+        seasonal_forecast_sanity_check = sf.predict(h=horizon)['MSTL'].to_numpy()
+
+    seasonal_forecasts.append(sf.fitted_[0, 0].forward(y=df_input['y'].to_numpy(), h=horizon)['mean'])
 
     df_to_predict = df_all.iloc[idx_end_input_window:idx_end_input_window + horizon]
 
     fig, axes = plt.subplots()
 
     axes.plot(df_to_predict['ds'][:horizon], df_to_predict['y'][:horizon])
-    axes.plot(df_seasonal_forecast['ds'][:horizon], df_seasonal_forecast['MSTL'][:horizon])
+    axes.plot(df_to_predict['ds'][:horizon], seasonal_forecasts[i_forecast])
     
     axes.grid()
     axes.tick_params(axis='x', labelrotation = 45)
@@ -130,14 +136,21 @@ for idx_end_input_window in range(idx_origin_prediction_start, idx_origin_predic
     # axes.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %H:%M'))
     fig.autofmt_xdate()
 
-# %%
-sf.fitted_[0, 0].model_.tail(24 * 14).plot(subplots=True, grid=True)
-plt.tight_layout()
-plt.show()
+seasonal_forecasts = np.stack(seasonal_forecasts)
 
 # %%
-len(df_test)
+df_test[model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])]
+# %%
+fig, axes = plt.subplots()
+axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])],df_test['DE_price_ahead'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])].values)
+axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])], seasonal_forecasts[:,0])
+axes.tick_params(axis='x', labelrotation = 45)
+fig.autofmt_xdate()
 
+# %%
+np.allclose(seasonal_forecast_sanity_check, seasonal_forecasts[0])
+
+# %%
 
 # %%
 cv_df = sf.cross_validation(df=df_all[:idx_origin_prediction_start + horizon], h = horizon, step_size = 24, refit = False, n_windows=1)
