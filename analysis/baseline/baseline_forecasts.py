@@ -26,13 +26,12 @@ if 'model_config' not in globals():
     model_config['input_len'] = 48
     model_config['horizon'] = 24
     model_config['date_run'] = datetime.today().date().isoformat()
-    model_config['data_split'] = '70_0_30'
+    model_config['data_split'] = '70_15_15'
 
 # %% Load functions
 from src.training.save_checkpoint import make_checkpoint_dir
 from src.training.reproducibility import set_seed
 from src.data_pipeline.dataloaders import load_splits, build_dataloaders
-from src.utils import rclone_bin
 
 SEED = 2026
 set_seed(SEED)
@@ -65,23 +64,6 @@ df_train, _, df_test = load_splits(filepaths=filepaths)
 model_name = 'baseline'
 save_checkpoint_dir = make_checkpoint_dir(model_name)
 
-# %% Decompose into trend, seasonality and residuals (NOTE: Time period of test data not long enough to get yearly seasonality)
-from statsmodels.tsa.seasonal import seasonal_decompose
-series = df_train.set_index('utc_timestamp')[targets_column_names[0]]
-
-# additive model
-decomposition_additive = seasonal_decompose(series, model = 'additive', period = 24*7)
-
-# %% Plot decomposition on training data
-
-fig = decomposition_additive.plot()
-fig.suptitle('Decomposition of Day Ahead Price using Additive Model', fontsize=14)
-ax = fig.axes[-1]
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-ax.xaxis.set_major_locator(mdates.MonthLocator())
-ax = fig.axes[0]
-ax.set_ylabel('Price (€/MWh)')
-
 
 # %% Multiple Seasonal-Trend Decomposition
 season_lengths = [24, 24 * 7] # one day and seven days
@@ -113,8 +95,9 @@ input_len = model_config['input_len']
 horizon = model_config['horizon']
 refit_step = 12 # not used
 idx_origin_prediction_start = len(df_train_target) + input_len
+n_check = 4
 
-for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_start, idx_origin_prediction_start + 4)): # len(df_all)) - horizon
+for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_start, idx_origin_prediction_start + n_check)): # len(df_all)) - horizon
     df_input = df_all.iloc[:idx_end_input_window]
     print(idx_end_input_window, len(df_input))
     if idx_end_input_window == idx_origin_prediction_start:
@@ -125,16 +108,17 @@ for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_st
 
     df_to_predict = df_all.iloc[idx_end_input_window:idx_end_input_window + horizon]
 
-    fig, axes = plt.subplots()
+    if i_forecast % 500 == 0
+        fig, axes = plt.subplots()
 
-    axes.plot(df_to_predict['ds'][:horizon], df_to_predict['y'][:horizon])
-    axes.plot(df_to_predict['ds'][:horizon], seasonal_forecasts[i_forecast])
-    
-    axes.grid()
-    axes.tick_params(axis='x', labelrotation = 45)
-    #axes.xaxis.set_major_locator(mdates.HourLocator(interval=4))
-    # axes.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %H:%M'))
-    fig.autofmt_xdate()
+        axes.plot(df_to_predict['ds'][:horizon], df_to_predict['y'][:horizon])
+        axes.plot(df_to_predict['ds'][:horizon], seasonal_forecasts[i_forecast])
+        
+        axes.grid()
+        axes.tick_params(axis='x', labelrotation = 45)
+        #axes.xaxis.set_major_locator(mdates.HourLocator(interval=4))
+        # axes.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %H:%M'))
+        fig.autofmt_xdate()
 
 seasonal_forecasts = np.stack(seasonal_forecasts)
 
@@ -142,7 +126,7 @@ seasonal_forecasts = np.stack(seasonal_forecasts)
 df_test[model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])]
 # %%
 fig, axes = plt.subplots()
-axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])],df_test['DE_price_ahead'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])].values)
+axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])], df_test['DE_price_ahead'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])].values)
 axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])], seasonal_forecasts[:,0])
 axes.tick_params(axis='x', labelrotation = 45)
 fig.autofmt_xdate()
@@ -151,10 +135,24 @@ fig.autofmt_xdate()
 np.allclose(seasonal_forecast_sanity_check, seasonal_forecasts[0])
 
 # %%
+n_check = 4
+cv_df[:n_check]['MSTL'], seasonal_forecasts[0, :n_check]
+print(cv_df['cutoff'].iloc[0] == df_all['ds'].iloc[idx_origin_prediction_start - 1])
 
 # %%
-cv_df = sf.cross_validation(df=df_all[:idx_origin_prediction_start + horizon], h = horizon, step_size = 24, refit = False, n_windows=1)
+idx_end_check = idx_origin_prediction_start + horizon + (n_check - 1) 
+cv_df = sf.cross_validation(df=df_all[:idx_end_check], h = horizon, step_size = 1, refit = False, n_windows=n_check)
 cv_df
+
+# %%
+print(cv_df['cutoff'].iloc[0])
+print(df_all['ds'].iloc[idx_origin_prediction_start - 1])
+
+# %%
+cv_forecasts = cv_df['MSTL'].to_numpy().reshape(n_check, horizon)
+
+# %%
+np.allclose(cv_forecasts[:n_check,:], seasonal_forecasts[:, :])
 
 # %%
 
