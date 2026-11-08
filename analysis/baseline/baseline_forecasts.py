@@ -57,7 +57,7 @@ train_dataloader_, _, test_dataloader = build_dataloaders(
 X_test, y_test = test_dataloader.dataset.tensors
 X_test, y_test = X_test.numpy(), y_test.numpy()
 
-df_train, _, df_test = load_splits(filepaths=filepaths)
+df_train, df_val, df_test = load_splits(filepaths=filepaths)
 
 # %% Create directories to save results 
 
@@ -72,17 +72,19 @@ sf = StatsForecast(models = models, freq = 'h')
 
 # %% Reorganize the train
 
-df_train_target = df_train[['utc_timestamp', 'DE_price_ahead']]
-df_train_target = df_train_target.rename(columns={'utc_timestamp': 'ds', 'DE_price_ahead': 'y'})
-df_train_target.insert(0, 'unique_id', 'DE_price_ahead')
-#df_train_target = df_train_target.sort_values(['unique_id', 'ds']).reset_index(drop=True)
+def reorganize_data_for_MSTL(df):
+    df_out = df[['utc_timestamp', 'DE_price_ahead']]
+    df_out = df_out.rename(columns={'utc_timestamp': 'ds', 'DE_price_ahead': 'y'})
+    df_out.insert(0, 'unique_id', 'DE_price_ahead')
+    #df_out = df_out.sort_values(['unique_id', 'ds']).reset_index(drop=True)
+    return df_out
 
-df_test_target = df_test[['utc_timestamp', 'DE_price_ahead']]
-df_test_target = df_test_target.rename(columns = {'utc_timestamp': 'ds', 'DE_price_ahead': 'y'})
-df_test_target.insert(0, 'unique_id', 'DE_price_ahead')
+df_train_target = reorganize_data_for_MSTL(df_train)
+df_val_target = reorganize_data_for_MSTL(df_val)
+df_test_target = reorganize_data_for_MSTL(df_test)
 
 # merge
-df_all = pd.concat([df_train_target, df_test_target])
+df_all = pd.concat([df_train_target, df_val_target, df_test_target])
 df_all
 
 
@@ -94,7 +96,7 @@ seasonal_forecasts = []
 input_len = model_config['input_len']
 horizon = model_config['horizon']
 refit_step = 12 # not used
-idx_origin_prediction_start = len(df_train_target) + input_len
+idx_origin_prediction_start = len(df_train_target) + len(df_val_target) + input_len
 n_check = 4
 
 for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_start, idx_origin_prediction_start + n_check)): # len(df_all)) - horizon
@@ -108,36 +110,64 @@ for i_forecast, idx_end_input_window in enumerate(range(idx_origin_prediction_st
 
     df_to_predict = df_all.iloc[idx_end_input_window:idx_end_input_window + horizon]
 
-    if i_forecast % 500 == 0
-        fig, axes = plt.subplots()
+    #if i_forecast % 500 == 0:
+    fig, axes = plt.subplots()
 
-        axes.plot(df_to_predict['ds'][:horizon], df_to_predict['y'][:horizon])
-        axes.plot(df_to_predict['ds'][:horizon], seasonal_forecasts[i_forecast])
-        
-        axes.grid()
-        axes.tick_params(axis='x', labelrotation = 45)
-        #axes.xaxis.set_major_locator(mdates.HourLocator(interval=4))
-        # axes.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %H:%M'))
-        fig.autofmt_xdate()
+    axes.plot(df_to_predict['ds'][:horizon], df_to_predict['y'][:horizon])
+    axes.plot(df_to_predict['ds'][:horizon], seasonal_forecasts[i_forecast])
+    
+    axes.grid()
+    axes.tick_params(axis='x', labelrotation = 45)
+    #axes.xaxis.set_major_locator(mdates.HourLocator(interval=4))
+    # axes.xaxis.set_major_formatter(mdates.DateFormatter('%d %b %H:%M'))
+    fig.autofmt_xdate()
 
 seasonal_forecasts = np.stack(seasonal_forecasts)
 
 # %%
-df_test[model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])]
-# %%
-fig, axes = plt.subplots()
-axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])], df_test['DE_price_ahead'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])].values)
-axes.plot(df_test['utc_timestamp'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])], seasonal_forecasts[:,0])
-axes.tick_params(axis='x', labelrotation = 45)
-fig.autofmt_xdate()
+y_pred_test_np = seasonal_forecasts[:,0]
 
 # %%
-np.allclose(seasonal_forecast_sanity_check, seasonal_forecasts[0])
-
+y_test_np = df_test['DE_price_ahead'][model_config['input_len']:(model_config['input_len']+seasonal_forecasts.shape[0])].values
+y_test_np
 # %%
-n_check = 4
-cv_df[:n_check]['MSTL'], seasonal_forecasts[0, :n_check]
-print(cv_df['cutoff'].iloc[0] == df_all['ds'].iloc[idx_origin_prediction_start - 1])
+metrics = {}
+metrics['MSE'] = np.mean((y_test_np - y_pred_test_np)**2)
+metrics['MAE'] = np.mean(np.abs(y_test_np - y_pred_test_np))
+metrics['MASE'] = np.mean(np.abs(y_test_np - y_pred_test_np)) / np.mean(np.abs(y_test_np[1:] - y_test_np[:-1]))
+metrics['RelMSE'] = metrics['MSE'] / np.mean(y_test_np**2) # relative meas square error
+metrics['FB'] = (np.sum(y_pred_test_np) - np.sum(y_test_np)) / np.sum(y_test_np)
+metrics
+
+# %% Plot MSTL forecast on test set (same layout as analysis/visualize_forecast.py)
+
+# Dates aligned to predictions: first prediction starts after input_len timesteps
+test_dates = df_test['utc_timestamp'].iloc[input_len: input_len + len(y_test_np)]
+
+fig, axes = plt.subplots(ncols = 2, figsize = (10, 5))
+
+axes[0].set_title('Whole Test Period')
+axes[0].plot(test_dates, y_test_np, label = 'Data')
+axes[0].plot(test_dates, y_pred_test_np, label = 'Model Forecast')
+axes[0].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+axes[0].xaxis.set_major_locator(mdates.MonthLocator())
+axes[0].set_ylabel('Price (EUR/MWh)')
+axes[0].set_xlabel('Dates')
+plt.setp(axes[0].xaxis.get_majorticklabels(), rotation=45)
+
+window_start = 100
+window_end = window_start + 200
+axes[1].set_title('Small Time Window')
+axes[1].plot(test_dates.iloc[window_start:window_end], y_test_np[window_start:window_end])
+axes[1].plot(test_dates.iloc[window_start:window_end], y_pred_test_np[window_start:window_end])
+axes[1].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+axes[1].set_xlabel('Dates')
+plt.setp(axes[1].xaxis.get_majorticklabels(), rotation=45)
+
+fig.suptitle('Model: MSTL baseline - prediction on test dataset\nMetrics: ' + ', '.join(f"{name}; {value:.2f}" for name, value in metrics.items()))
+fig.legend()
+fig.tight_layout()
+
 
 # %%
 idx_end_check = idx_origin_prediction_start + horizon + (n_check - 1) 
