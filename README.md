@@ -21,6 +21,7 @@ Set up a data pipeline to forecast electricity prices in Europe using models fro
     - [x] Moving average
     - [x] Naive seasonal forecast
     - [x] ARIMA
+- [x] **Evaluation**: Set up evaluation metrics and visualization of forecasts and save them 
 - [x] **GPU capability**: Enable training of model with Google Colab kernel in VS code.
 - [x] **Model storage**: Add automatic saving of model checkpoints and syncing of saved models to Google Drive.
 - [x] Write script to calculate metrics and visualize forecasting results.
