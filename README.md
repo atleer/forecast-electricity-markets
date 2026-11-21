@@ -1,7 +1,7 @@
 # Forecasting Electricity Markets
 
 ### Goal: 
-Set up a data pipeline to forecast electricity prices in Europe.
+Set up a data pipeline to forecast electricity prices in Europe using models from [Modern Time Series Forecasting with Python](https://www.amazon.de/-/en/Modern-Time-Forecasting-Python-industry-ready-ebook/dp/B0BHJ9ZX4Q).
 
 **Rules/Specifications**:
 - **No AI**. Only use AI to help debug or as a teaching assistant (ask questions to check understanding). The code should be written and the problems should be solved by me for enhanced learning.
